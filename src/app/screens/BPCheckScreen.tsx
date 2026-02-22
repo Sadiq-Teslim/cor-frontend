@@ -509,6 +509,133 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
               </div>
             )}
 
+            {/* HERO: Blood Pressure Display */}
+            <div
+              className="text-center py-6 mb-4 rounded-2xl"
+              style={{
+                background: "linear-gradient(180deg, #0A0F1E 0%, #111827 100%)",
+                border: "1px solid #1E2D45",
+              }}
+            >
+              <div className="text-sm mb-2" style={{ color: "#8896A8" }}>
+                Blood Pressure
+              </div>
+              <div
+                className="text-5xl font-bold mb-2"
+                style={{
+                  color:
+                    bpReading.category === "Normal"
+                      ? "#00E5CC"
+                      : bpReading.category === "Elevated"
+                        ? "#F5A623"
+                        : bpReading.category === "Stage 1 Hypertension"
+                          ? "#FF8C42"
+                          : bpReading.category === "Stage 2 Hypertension" ||
+                              bpReading.category === "Hypertensive Crisis"
+                            ? "#FF4D4D"
+                            : "#F0F4FF",
+                }}
+              >
+                {bpReading.systolic || "--"}/{bpReading.diastolic || "--"}
+                <span className="text-lg font-normal ml-1" style={{ color: "#8896A8" }}>
+                  mmHg
+                </span>
+              </div>
+
+              {/* Risk Indicator Badge */}
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mt-2"
+                style={{
+                  background:
+                    bpReading.category === "Normal"
+                      ? "rgba(0, 229, 204, 0.15)"
+                      : bpReading.category === "Elevated"
+                        ? "rgba(245, 166, 35, 0.15)"
+                        : bpReading.category === "Stage 1 Hypertension"
+                          ? "rgba(255, 140, 66, 0.15)"
+                          : bpReading.category === "Stage 2 Hypertension" ||
+                              bpReading.category === "Hypertensive Crisis"
+                            ? "rgba(255, 77, 77, 0.15)"
+                            : "rgba(136, 150, 168, 0.15)",
+                  border: `1px solid ${
+                    bpReading.category === "Normal"
+                      ? "#00E5CC"
+                      : bpReading.category === "Elevated"
+                        ? "#F5A623"
+                        : bpReading.category === "Stage 1 Hypertension"
+                          ? "#FF8C42"
+                          : bpReading.category === "Stage 2 Hypertension" ||
+                              bpReading.category === "Hypertensive Crisis"
+                            ? "#FF4D4D"
+                            : "#8896A8"
+                  }`,
+                }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    background:
+                      bpReading.category === "Normal"
+                        ? "#00E5CC"
+                        : bpReading.category === "Elevated"
+                          ? "#F5A623"
+                          : bpReading.category === "Stage 1 Hypertension"
+                            ? "#FF8C42"
+                            : bpReading.category === "Stage 2 Hypertension" ||
+                                bpReading.category === "Hypertensive Crisis"
+                              ? "#FF4D4D"
+                              : "#8896A8",
+                  }}
+                />
+                <span
+                  className="text-sm font-semibold"
+                  style={{
+                    color:
+                      bpReading.category === "Normal"
+                        ? "#00E5CC"
+                        : bpReading.category === "Elevated"
+                          ? "#F5A623"
+                          : bpReading.category === "Stage 1 Hypertension"
+                            ? "#FF8C42"
+                            : bpReading.category === "Stage 2 Hypertension" ||
+                                bpReading.category === "Hypertensive Crisis"
+                              ? "#FF4D4D"
+                              : "#8896A8",
+                  }}
+                >
+                  {bpReading.category === "Normal"
+                    ? "✓ Normal Range"
+                    : bpReading.category === "Elevated"
+                      ? "⚠ Elevated"
+                      : bpReading.category === "Stage 1 Hypertension"
+                        ? "⚠ High BP Stage 1"
+                        : bpReading.category === "Stage 2 Hypertension"
+                          ? "⚠ High BP Stage 2"
+                          : bpReading.category === "Hypertensive Crisis"
+                            ? "🚨 Hypertensive Crisis"
+                            : bpReading.category || "Measuring..."}
+                </span>
+              </div>
+
+              {/* Dynamic Short Explanation */}
+              <p
+                className="text-sm mt-3 px-4"
+                style={{ color: "#A0AEC0" }}
+              >
+                {bpReading.category === "Normal"
+                  ? "Your blood pressure is within the healthy range. Keep up your good habits!"
+                  : bpReading.category === "Elevated"
+                    ? "Your BP is slightly elevated. Consider reducing sodium and stress."
+                    : bpReading.category === "Stage 1 Hypertension"
+                      ? "Your BP is moderately high. Lifestyle changes and monitoring recommended."
+                      : bpReading.category === "Stage 2 Hypertension"
+                        ? "Your BP is significantly elevated. Consult a healthcare professional."
+                        : bpReading.category === "Hypertensive Crisis"
+                          ? "Seek immediate medical attention if you have symptoms."
+                          : "Complete reading to see your risk assessment."}
+              </p>
+            </div>
+
             {/* Early Completion Badge */}
             {bpReading.earlyComplete && !bpReading.lowConfidence && (
               <div
@@ -536,12 +663,12 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
               >
                 <AlertCircle size={16} style={{ color: "#F5A623" }} />
                 <span className="text-sm" style={{ color: "#F5A623" }}>
-                  Variable signal quality
+                  Variable signal quality - results may be less accurate
                 </span>
               </div>
             )}
 
-            {/* Results Table */}
+            {/* Additional Metrics */}
             <div
               className="rounded-xl overflow-hidden mb-4"
               style={{ border: "1px solid #1E2D45" }}
@@ -568,7 +695,7 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
                       </span>
                     </td>
                   </tr>
-                  <tr style={{ borderBottom: "1px solid #1E2D45" }}>
+                  <tr>
                     <td
                       className="px-4 py-3 text-sm"
                       style={{ color: "#8896A8" }}
@@ -588,57 +715,6 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
                       </span>
                     </td>
                   </tr>
-                  {bpReading.systolic && bpReading.diastolic && (
-                    <tr style={{ borderBottom: "1px solid #1E2D45" }}>
-                      <td
-                        className="px-4 py-3 text-sm"
-                        style={{ color: "#8896A8" }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">🩸</span>
-                          Blood Pressure
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-bold text-lg">
-                          {bpReading.systolic}/{bpReading.diastolic}
-                        </span>
-                        <span
-                          className="text-sm font-normal ml-1"
-                          style={{ color: "#8896A8" }}
-                        >
-                          mmHg
-                        </span>
-                      </td>
-                    </tr>
-                  )}
-                  {bpReading.category && (
-                    <tr>
-                      <td
-                        className="px-4 py-3 text-sm"
-                        style={{ color: "#8896A8" }}
-                      >
-                        Category
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span
-                          className="px-3 py-1 rounded-full text-sm font-semibold"
-                          style={{
-                            background:
-                              bpReading.status === "normal"
-                                ? "rgba(0, 229, 204, 0.15)"
-                                : "rgba(245, 166, 35, 0.15)",
-                            color:
-                              bpReading.status === "normal"
-                                ? "#00E5CC"
-                                : "#F5A623",
-                          }}
-                        >
-                          {bpReading.category}
-                        </span>
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -654,7 +730,7 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
                   color: bpReading.status === "normal" ? "#00E5CC" : "#F5A623",
                 }}
               >
-                INTERPRETATION
+                PERSONALIZED INSIGHT
               </div>
               <p className="text-sm leading-relaxed mb-2">
                 {bpReading.message}
