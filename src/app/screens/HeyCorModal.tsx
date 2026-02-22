@@ -100,6 +100,10 @@ export default function HeyCorModal({
         question,
         langCode,
         userId || undefined,
+        {
+          appContext: userContext,
+          features: ['bp-camera', 'food-logger', 'voice-assistant', 'medication-tracking', 'health-trends'],
+        },
       );
       setCorResponse(response.text);
 
