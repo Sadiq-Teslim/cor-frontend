@@ -537,7 +537,10 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
                 }}
               >
                 {bpReading.systolic || "--"}/{bpReading.diastolic || "--"}
-                <span className="text-lg font-normal ml-1" style={{ color: "#8896A8" }}>
+                <span
+                  className="text-lg font-normal ml-1"
+                  style={{ color: "#8896A8" }}
+                >
                   mmHg
                 </span>
               </div>
@@ -618,10 +621,7 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
               </div>
 
               {/* Dynamic Short Explanation */}
-              <p
-                className="text-sm mt-3 px-4"
-                style={{ color: "#A0AEC0" }}
-              >
+              <p className="text-sm mt-3 px-4" style={{ color: "#A0AEC0" }}>
                 {bpReading.category === "Normal"
                   ? "Your blood pressure is within the healthy range. Keep up your good habits!"
                   : bpReading.category === "Elevated"
