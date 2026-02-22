@@ -48,6 +48,8 @@ It is a screening and risk stratification tool designed to prompt early interven
 * Multilingual UI support
 * Confidence score display for transparency
 
+## Future Implementations
+* Fast sync with Smart Watches
 ---
 
 ## Dashboard Structure
