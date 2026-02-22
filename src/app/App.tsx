@@ -27,7 +27,7 @@ import {
 } from "./screens";
 
 export default function App() {
-  const { user, userId, setUser, setUserId } = useUser();
+  const { user, userId, isLoading, setUser, setUserId } = useUser();
 
   const [currentScreen, setCurrentScreen] = useState("screen-1");
   const [selectedLanguage, setSelectedLanguage] = useState("English");
@@ -209,6 +209,37 @@ export default function App() {
 
   // Render the active screen
   const renderScreen = () => {
+    // Show spinner while loading returning user data
+    if (userId && isLoading && currentScreen === "screen-1") {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center"
+            style={{
+              background: "rgba(0, 229, 204, 0.15)",
+              animation: "pulse 1.5s ease-in-out infinite",
+            }}
+          >
+            <div
+              className="w-8 h-8 rounded-full border-3"
+              style={{
+                borderWidth: "3px",
+                borderColor: "#1E2D45",
+                borderTopColor: "#00E5CC",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+          </div>
+          <p className="text-sm" style={{ color: "#8896A8" }}>Loading your profile...</p>
+          <style>{`
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      );
+    }
+
     switch (currentScreen) {
       case "screen-1":
         return (
