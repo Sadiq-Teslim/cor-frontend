@@ -114,16 +114,17 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
             savedAt,
           });
           setShowResultModal(true);
-        } catch {
+        } catch (err) {
+          console.error("[BPCheck] Failed to save reading:", err);
+          // Still show a result but indicate it wasn't saved
           setBpReading({
             hr: heartRate,
             hrv: hrv,
             status: "elevated",
             message:
-              "Reading captured. Connect to see your personalized insights.",
+              "Reading detected but couldn't save. Please check your connection and try again.",
             lowConfidence,
             earlyComplete: isEarly,
-            savedAt,
           });
           setShowResultModal(true);
         }
