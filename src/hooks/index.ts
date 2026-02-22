@@ -1,26 +1,29 @@
 // Custom Hooks
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 // Toast hook for showing notifications
 interface ToastState {
   isOpen: boolean;
   message: string;
-  type: 'success' | 'error' | 'info';
+  type: "success" | "error" | "info";
 }
 
 export function useToast() {
   const [toast, setToast] = useState<ToastState>({
     isOpen: false,
-    message: '',
-    type: 'info',
+    message: "",
+    type: "info",
   });
 
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setToast({ isOpen: true, message, type });
-    setTimeout(() => {
-      setToast((prev) => ({ ...prev, isOpen: false }));
-    }, 3000);
-  }, []);
+  const showToast = useCallback(
+    (message: string, type: "success" | "error" | "info" = "info") => {
+      setToast({ isOpen: true, message, type });
+      setTimeout(() => {
+        setToast((prev) => ({ ...prev, isOpen: false }));
+      }, 3000);
+    },
+    [],
+  );
 
   const hideToast = useCallback(() => {
     setToast((prev) => ({ ...prev, isOpen: false }));
@@ -43,7 +46,7 @@ export function useApiState<T>() {
       setData(result);
       return result;
     } catch (err: any) {
-      const errorMessage = err.message || 'An error occurred';
+      const errorMessage = err.message || "An error occurred";
       setError(errorMessage);
       throw err;
     } finally {
@@ -93,7 +96,18 @@ export function useCountdown(initialValue: number, onComplete?: () => void) {
   // Timer effect is handled in component using this hook
   // This is just state management
 
-  return { countdown, setCountdown, isRunning, setIsRunning, start, stop, reset };
+  return {
+    countdown,
+    setCountdown,
+    isRunning,
+    setIsRunning,
+    start,
+    stop,
+    reset,
+  };
 }
+
+export { useVoiceOnboarding } from "./useVoiceOnboarding";
+export type { VoiceState } from "./useVoiceOnboarding";
 
 export default useToast;
