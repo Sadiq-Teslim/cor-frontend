@@ -62,6 +62,7 @@ export function useWakeWord({
   const restartTimeoutRef = useRef<number | null>(null);
   const isStartingRef = useRef(false);
   const hasPermissionDeniedRef = useRef(false);
+  const manualStopRef = useRef(false);
 
   // Check if Web Speech API is supported
   useEffect(() => {
@@ -131,6 +132,8 @@ export function useWakeWord({
 
         if (detected) {
           console.log("[WakeWord] Detected:", transcript);
+          // Mark as intentional stop to prevent auto-restart in onend
+          manualStopRef.current = true;
           // Stop recognition and trigger wake callback
           recognition.stop();
           onWake();
@@ -170,6 +173,12 @@ export function useWakeWord({
       setIsListening(false);
       onListening?.(false);
 
+      // Don't auto-restart if manually stopped for wake detection
+      if (manualStopRef.current) {
+        manualStopRef.current = false;
+        return;
+      }
+
       // Auto-restart only if enabled, permission not denied, and this is still the current instance
       if (enabled && !hasPermissionDeniedRef.current && recognitionRef.current === recognition) {
         restartTimeoutRef.current = window.setTimeout(() => {
@@ -201,6 +210,7 @@ export function useWakeWord({
 
     isStartingRef.current = false;
     hasPermissionDeniedRef.current = false;
+    // Don't reset manualStopRef - let onend handle it
 
     if (recognitionRef.current) {
       try {
@@ -217,15 +227,18 @@ export function useWakeWord({
     onListening?.(false);
   }, [onListening]);
 
-  // Start/stop based on enabled
+    // Start/stop based on enabled
   useEffect(() => {
     if (enabled && isSupported) {
+      console.log("[WakeWord] Starting listener");
       startListening();
     } else {
+      console.log("[WakeWord] Stopping listener");
       stopListening();
     }
 
     return () => {
+      console.log("[WakeWord] Cleanup: stopping listener");
       stopListening();
     };
   }, [enabled, isSupported, startListening, stopListening]);

@@ -159,9 +159,17 @@ export function useVoiceInput({
         } catch (err: any) {
           console.error("[VoiceInput] Media error:", err);
           
-          // Retry on NotAllowedError or NotFoundError (microphone in use)
+          // NotAllowedError means permission denied - don't retry
+          if (err.name === "NotAllowedError") {
+            console.warn("[VoiceInput] Microphone permission denied");
+            onError?.("Microphone permission denied");
+            setIsRecording(false);
+            return;
+          }
+
+          // Retry on NotFoundError (microphone in use)
           if (
-            (err.name === "NotAllowedError" || err.name === "NotFoundError" || err.message?.includes("Permission denied")) &&
+            (err.name === "NotFoundError" || err.message?.includes("Permission denied")) &&
             retries < maxRetries
           ) {
             retries++;
