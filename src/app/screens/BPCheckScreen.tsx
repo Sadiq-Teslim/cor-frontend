@@ -265,12 +265,14 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
         playsInline
         muted
         className="hidden"
-        style={{ width: 1, height: 1 }}
+        width="320"
+        height="240"
       />
       <canvas
         ref={canvasRef}
         className="hidden"
-        style={{ width: 1, height: 1 }}
+        width="320"
+        height="240"
       />
 
       {error && (
