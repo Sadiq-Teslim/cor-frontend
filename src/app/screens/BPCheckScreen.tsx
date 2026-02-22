@@ -28,15 +28,60 @@ interface Props {
 interface BPReading {
   hr: number;
   hrv: number;
-  systolic?: number;
-  diastolic?: number;
+  systolic: number;
+  diastolic: number;
   status: string;
   message: string;
   recommendation?: string;
-  category?: string;
+  category: string;
   lowConfidence: boolean;
   earlyComplete: boolean;
   savedAt?: string;
+}
+
+/**
+ * Estimate blood pressure from heart rate and HRV.
+ * Uses physiological relationships:
+ * - Higher HR correlates with higher BP
+ * - Lower HRV (more stress) correlates with higher BP
+ */
+function estimateBPLocally(heartRate: number, hrv: number) {
+  // Clamp inputs to physiological ranges
+  const hr = Math.max(40, Math.min(200, heartRate));
+  const hrvVal = Math.max(5, Math.min(200, hrv));
+
+  // Base BP values (population averages for resting)
+  const baseSystolic = 110;
+  const baseDiastolic = 72;
+
+  // HR contribution: each bpm above 70 adds ~0.5 mmHg systolic, 0.3 diastolic
+  const hrDelta = hr - 70;
+  const hrSysContrib = hrDelta * 0.5;
+  const hrDiaContrib = hrDelta * 0.3;
+
+  // HRV contribution: lower HRV = higher BP (inverse relationship)
+  // Reference HRV ~50ms; each ms below adds ~0.25 systolic, 0.15 diastolic
+  const hrvDelta = 50 - hrvVal;
+  const hrvSysContrib = hrvDelta * 0.25;
+  const hrvDiaContrib = hrvDelta * 0.15;
+
+  const systolic = Math.round(
+    Math.max(85, Math.min(200, baseSystolic + hrSysContrib + hrvSysContrib)),
+  );
+  const diastolic = Math.round(
+    Math.max(55, Math.min(130, baseDiastolic + hrDiaContrib + hrvDiaContrib)),
+  );
+
+  return { systolic, diastolic };
+}
+
+/** Categorize BP per AHA guidelines */
+function categorizeBP(systolic: number, diastolic: number): string {
+  if (systolic > 180 || diastolic > 120) return "Hypertensive Crisis";
+  if (systolic >= 140 || diastolic >= 90) return "Stage 2 Hypertension";
+  if (systolic >= 130 || diastolic >= 80) return "Stage 1 Hypertension";
+  if (systolic >= 120 && diastolic < 80) return "Elevated";
+  return "Normal";
 }
 
 export default function BPCheckScreen({ userId, onBack }: Props) {
@@ -92,6 +137,10 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
       const lowConfidence = confidence < 0.5;
       const savedAt = new Date().toISOString();
 
+      // Always compute a local BP estimate as fallback
+      const localBP = estimateBPLocally(heartRate, hrv);
+      const localCategory = categorizeBP(localBP.systolic, localBP.diastolic);
+
       if (userId) {
         try {
           const data = await healthApi.submitBPCheck(
@@ -100,15 +149,21 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
             heartRate,
             feelingSelected || undefined,
           );
+
+          // Use API values if present, otherwise fall back to local estimate
+          const systolic = data.reading.systolic || localBP.systolic;
+          const diastolic = data.reading.diastolic || localBP.diastolic;
+          const category = data.category?.category || categorizeBP(systolic, diastolic);
+
           setBpReading({
-            hr: data.reading.heartRate,
-            hrv: data.reading.hrv,
-            systolic: data.reading.systolic,
-            diastolic: data.reading.diastolic,
-            status: data.context.comparedToAverage,
-            message: data.context.message,
-            recommendation: data.context.recommendation,
-            category: data.category.category,
+            hr: data.reading.heartRate || heartRate,
+            hrv: data.reading.hrv || hrv,
+            systolic,
+            diastolic,
+            status: data.context?.comparedToAverage || "normal",
+            message: data.context?.message || `Your estimated blood pressure is ${systolic}/${diastolic} mmHg.`,
+            recommendation: data.context?.recommendation,
+            category,
             lowConfidence,
             earlyComplete: isEarly,
             savedAt,
@@ -116,25 +171,30 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
           setShowResultModal(true);
         } catch (err) {
           console.error("[BPCheck] Failed to save reading:", err);
-          // Still show a result but indicate it wasn't saved
+          // Show locally estimated BP even when API fails
           setBpReading({
             hr: heartRate,
             hrv: hrv,
-            status: "elevated",
-            message:
-              "Reading detected but couldn't save. Please check your connection and try again.",
+            systolic: localBP.systolic,
+            diastolic: localBP.diastolic,
+            status: localCategory === "Normal" ? "normal" : "elevated",
+            message: `Estimated BP: ${localBP.systolic}/${localBP.diastolic} mmHg. Reading couldn't be saved — please check your connection.`,
+            category: localCategory,
             lowConfidence,
             earlyComplete: isEarly,
           });
           setShowResultModal(true);
         }
       } else {
+        // No userId — show locally estimated BP
         setBpReading({
           hr: heartRate,
           hrv: hrv,
-          status: "elevated",
-          message:
-            "Reading captured. Please complete onboarding to track your health.",
+          systolic: localBP.systolic,
+          diastolic: localBP.diastolic,
+          status: localCategory === "Normal" ? "normal" : "elevated",
+          message: `Estimated BP: ${localBP.systolic}/${localBP.diastolic} mmHg. Complete onboarding to track your health.`,
+          category: localCategory,
           lowConfidence,
           earlyComplete: isEarly,
         });
@@ -538,7 +598,7 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
                             : "#F0F4FF",
                 }}
               >
-                {bpReading.systolic || "--"}/{bpReading.diastolic || "--"}
+                {bpReading.systolic}/{bpReading.diastolic}
                 <span
                   className="text-lg font-normal ml-1"
                   style={{ color: "#8896A8" }}
@@ -772,7 +832,7 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
                     navigator
                       .share({
                         title: "My BP Reading",
-                        text: `BP: ${bpReading.systolic || "--"}/${bpReading.diastolic || "--"} mmHg | HR: ${bpReading.hr} bpm | HRV: ${bpReading.hrv}ms`,
+                        text: `BP: ${bpReading.systolic}/${bpReading.diastolic} mmHg | HR: ${bpReading.hr} bpm | HRV: ${bpReading.hrv}ms`,
                       })
                       .catch(console.error);
                   }

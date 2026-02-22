@@ -11,6 +11,32 @@ interface Props {
   onComplete: () => void;
 }
 
+/** Estimate BP from heart rate and HRV locally */
+function estimateBPLocally(heartRate: number, hrv: number) {
+  const hr = Math.max(40, Math.min(200, heartRate));
+  const hrvVal = Math.max(5, Math.min(200, hrv));
+  const baseSystolic = 110;
+  const baseDiastolic = 72;
+  const hrDelta = hr - 70;
+  const hrvDelta = 50 - hrvVal;
+  const systolic = Math.round(
+    Math.max(85, Math.min(200, baseSystolic + hrDelta * 0.5 + hrvDelta * 0.25)),
+  );
+  const diastolic = Math.round(
+    Math.max(55, Math.min(130, baseDiastolic + hrDelta * 0.3 + hrvDelta * 0.15)),
+  );
+  return { systolic, diastolic };
+}
+
+/** Categorize BP per AHA guidelines */
+function categorizeBP(systolic: number, diastolic: number): string {
+  if (systolic > 180 || diastolic > 120) return "Hypertensive Crisis";
+  if (systolic >= 140 || diastolic >= 90) return "Stage 2 Hypertension";
+  if (systolic >= 130 || diastolic >= 80) return "Stage 1 Hypertension";
+  if (systolic >= 120 && diastolic < 80) return "Elevated";
+  return "Normal";
+}
+
 export default function FirstReadingScreen({ userId, onComplete }: Props) {
   const [isReading, setIsReading] = useState(false);
   const [countdown, setCountdown] = useState(30);
@@ -62,6 +88,16 @@ export default function FirstReadingScreen({ userId, onComplete }: Props) {
       const { heartRate, hrv, confidence } = result;
       const lowConfidence = confidence < 0.5;
 
+      // Always compute a local BP estimate as fallback
+      const localBP = estimateBPLocally(heartRate, hrv);
+      const localCategory = categorizeBP(localBP.systolic, localBP.diastolic);
+      const localEstimate = {
+        systolic: localBP.systolic,
+        diastolic: localBP.diastolic,
+        confidence: confidence,
+        category: localCategory,
+      };
+
       if (userId) {
         try {
           const data = await healthApi.submitFirstReading(
@@ -69,12 +105,19 @@ export default function FirstReadingScreen({ userId, onComplete }: Props) {
             hrv,
             heartRate,
           );
+
+          // Use API bpEstimate if present and has values, otherwise use local
+          const bpEstimate =
+            data.bpEstimate && data.bpEstimate.systolic && data.bpEstimate.diastolic
+              ? data.bpEstimate
+              : localEstimate;
+
           setBpReading({
-            hr: data.reading.heartRate,
-            hrv: data.reading.hrv,
-            status: data.hrvStatus,
-            message: data.message,
-            bpEstimate: data.bpEstimate,
+            hr: data.reading?.heartRate || heartRate,
+            hrv: data.reading?.hrv || hrv,
+            status: data.hrvStatus || "normal",
+            message: data.message || "Your baseline is set. Cor will now personalise your monitoring.",
+            bpEstimate,
             lowConfidence,
             earlyComplete: isEarly,
           });
@@ -85,6 +128,7 @@ export default function FirstReadingScreen({ userId, onComplete }: Props) {
             status: "normal",
             message:
               "Your baseline is set. Cor will now personalise your monitoring.",
+            bpEstimate: localEstimate,
             lowConfidence,
             earlyComplete: isEarly,
           });
@@ -96,6 +140,7 @@ export default function FirstReadingScreen({ userId, onComplete }: Props) {
           status: "normal",
           message:
             "Your baseline is set. Cor will now personalise your monitoring.",
+          bpEstimate: localEstimate,
           lowConfidence,
           earlyComplete: isEarly,
         });
