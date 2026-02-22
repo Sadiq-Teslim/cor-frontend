@@ -23,6 +23,8 @@ interface LastBPReading {
   heartRate: number;
   hrv: number;
   date: string;
+  systolic?: number;
+  diastolic?: number;
 }
 
 export default function HomeScreen({
@@ -66,23 +68,24 @@ export default function HomeScreen({
       .then((data) => {
         setCssScore(data.css.score);
       })
-      .catch(console.error);
+      .catch(() => {
+        // CSS calculation requires baseline - will be set after first reading
+        setCssScore(null);
+      });
 
-    // Fetch readings to get last BP
+    // Fetch BP readings to get last BP with systolic/diastolic
     healthApi
-      .getReadings(userId, 7)
+      .getBPReadings(userId, 7)
       .then((data) => {
         if (data.readings && data.readings.length > 0) {
           const latest = data.readings[0];
-          setLastBP((prev) =>
-            prev
-              ? { ...prev, hrv: latest.hrv, heartRate: latest.heartRate || 0 }
-              : {
-                  heartRate: latest.heartRate || 0,
-                  hrv: latest.hrv,
-                  date: latest.date,
-                },
-          );
+          setLastBP({
+            heartRate: latest.heartRate || 0,
+            hrv: latest.hrv,
+            date: latest.date,
+            systolic: latest.systolic,
+            diastolic: latest.diastolic,
+          });
         }
       })
       .catch(console.error);
@@ -202,11 +205,12 @@ export default function HomeScreen({
             {lastBP ? (
               <>
                 <div className="text-xl font-bold">
-                  {lastBP.heartRate || "--"}{" "}
-                  <span className="text-sm font-normal">bpm</span>
+                  {lastBP.systolic && lastBP.diastolic 
+                    ? `${lastBP.systolic}/${lastBP.diastolic}` 
+                    : `${lastBP.heartRate || "--"} bpm`}
                 </div>
                 <div className="text-xs mt-1" style={{ color: "#8896A8" }}>
-                  HRV: {lastBP.hrv || "--"}ms
+                  {lastBP.systolic ? `HR: ${lastBP.heartRate || "--"} bpm` : `HRV: ${lastBP.hrv || "--"}ms`}
                 </div>
               </>
             ) : (

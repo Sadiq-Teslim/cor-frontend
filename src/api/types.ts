@@ -98,6 +98,20 @@ export interface BPCheckResponse {
   };
 }
 
+export interface BPReadingHistory {
+  id: string;
+  userId: string;
+  date: string;
+  systolic: number;
+  diastolic: number;
+  hrv: number;
+  heartRate?: number;
+  confidence: number;
+  method: string;
+  feelingNote?: string;
+  createdAt: string;
+}
+
 export interface FirstReadingResponse {
   message: string;
   hrvStatus: 'normal' | 'low' | 'high';

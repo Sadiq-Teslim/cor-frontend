@@ -9,6 +9,7 @@ import type {
   BPEstimate,
   AlertData,
   AlertHistory,
+  BPReadingHistory,
 } from "./types";
 
 export const healthApi = {
@@ -62,6 +63,16 @@ export const healthApi = {
     const params = new URLSearchParams({ userId });
     if (days) params.append("days", days.toString());
     return apiClient.get(`/api/health/readings?${params}`);
+  },
+
+  // Get BP readings history
+  async getBPReadings(
+    userId: string,
+    days?: number,
+  ): Promise<{ readings: BPReadingHistory[] }> {
+    const params = new URLSearchParams({ userId });
+    if (days) params.append("days", days.toString());
+    return apiClient.get(`/api/health/bp-readings?${params}`);
   },
 
   // Set baseline

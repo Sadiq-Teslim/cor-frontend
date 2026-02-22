@@ -5,7 +5,7 @@ import { LANGUAGE_MAP } from "../api/types";
 import type { AlertData } from "../api/types";
 import type { OnboardingFormData } from "./screens";
 
-import { Home, Lightbulb, ClipboardPen, Settings, Mic } from "lucide-react";
+import { Home, Clock, ClipboardPen, Settings, Mic } from "lucide-react";
 
 import {
   WelcomeScreen,
@@ -341,8 +341,8 @@ export default function App() {
               { key: "home", icon: <Home size={20} />, label: "Home" },
               {
                 key: "insights",
-                icon: <Lightbulb size={20} />,
-                label: "Insights",
+                icon: <Clock size={20} />,
+                label: "History",
               },
               { key: "log", icon: <ClipboardPen size={20} />, label: "Log" },
               {

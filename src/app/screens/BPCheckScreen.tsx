@@ -59,6 +59,7 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectorRef = useRef<RPPGDetector | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -144,11 +145,11 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
 
   const handleEarlyCompletion = useCallback(
     (result: RPPGResult) => {
-      // Calculate time elapsed (30 - current countdown)
-      const timeElapsed = 30 - countdown;
+      // Calculate time elapsed from start time
+      const timeElapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
       processResult(result, true, timeElapsed);
     },
-    [processResult, countdown],
+    [processResult],
   );
 
   const finishReading = useCallback(async () => {
@@ -165,7 +166,8 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
       return;
     }
 
-    processResult(result, false, 30);
+    const timeElapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+    processResult(result, false, timeElapsed);
   }, [processResult]);
 
   const startReading = async () => {
@@ -176,6 +178,7 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
     setIsReading(true);
     setCountdown(30);
     setCompletionTime(30);
+    startTimeRef.current = Date.now();
     setSignalQuality({
       strength: 0,
       brightness: 0,
