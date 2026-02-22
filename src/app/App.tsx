@@ -81,13 +81,10 @@ export default function App() {
   ].includes(currentScreen);
 
   // Wake word detection - "Hey Cor" activates voice assistant
-  // Disable during BP detection (screens 6 & 8) to avoid microphone conflicts
-  const isBPDetectionActive = ["screen-6", "screen-8"].includes(currentScreen);
-  
   const { isListening: wakeIsListening, isSupported: wakeSupported } =
     useWakeWord({
       wakePhrase: "hey cor",
-      enabled: wakeWordEnabled && isPostOnboarding && !showHeyCor && !isBPDetectionActive,
+      enabled: wakeWordEnabled && isPostOnboarding && !showHeyCor,
       onWake: () => {
         console.log("[App] Wake word detected - opening Hey Cor");
         setShowHeyCor(true);
@@ -345,7 +342,7 @@ export default function App() {
         )}
 
         {/* Hey Cor Button with Wake Word Indicator */}
-        {isPostOnboarding && !isBPDetectionActive && (
+        {isPostOnboarding && (
           <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
             {/* Wake word status */}
             {wakeSupported && wakeWordEnabled && (
