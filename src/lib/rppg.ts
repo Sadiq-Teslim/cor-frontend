@@ -122,7 +122,23 @@ export class RPPGDetector {
       }
 
       this.video.srcObject = this.stream;
+      
+      // Wait for video to load metadata
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("Video metadata timeout")), 5000);
+        this.video.onloadedmetadata = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+        this.video.onerror = (err) => {
+          clearTimeout(timeout);
+          reject(err);
+        };
+      });
+      
       await this.video.play();
+      
+      console.log(`[RPPG] Video loaded: ${this.video.videoWidth}x${this.video.videoHeight}`);
 
       this.redSamples = [];
       this.greenSamples = [];
@@ -401,12 +417,18 @@ export class RPPGDetector {
    * Main capture loop - samples red and green channels from video frames
    */
   private loop = (): void => {
-    if (!this.running || !this.ctx) return;
+    if (!this.running || !this.ctx) {
+      console.warn("[RPPG] Loop terminated: running=", this.running, "ctx=", !!this.ctx);
+      return;
+    }
 
     const { videoWidth, videoHeight } = this.video;
 
     // Wait for video to be ready
     if (videoWidth === 0) {
+      if (this.redSamples.length === 0) {
+        console.log("[RPPG] Waiting for video metadata...");
+      }
       this.raf = requestAnimationFrame(this.loop);
       return;
     }
@@ -416,19 +438,34 @@ export class RPPGDetector {
     this.canvas.height = videoHeight;
 
     // Draw current frame to canvas
-    this.ctx.drawImage(this.video, 0, 0);
+    try {
+      this.ctx.drawImage(this.video, 0, 0);
+    } catch (err) {
+      console.error("[RPPG] Failed to draw video to canvas:", err);
+      this.raf = requestAnimationFrame(this.loop);
+      return;
+    }
 
     // Sample center region (where finger covers camera)
     const cx = Math.floor(videoWidth / 2);
     const cy = Math.floor(videoHeight / 2);
     const size = Math.min(videoWidth, videoHeight, 100); // Larger patch for better averaging
 
-    const data = this.ctx.getImageData(
-      cx - size / 2,
-      cy - size / 2,
-      size,
-      size,
-    ).data;
+    let imageData;
+    try {
+      imageData = this.ctx.getImageData(
+        cx - size / 2,
+        cy - size / 2,
+        size,
+        size,
+      );
+    } catch (err) {
+      console.error("[RPPG] Failed to get image data:", err);
+      this.raf = requestAnimationFrame(this.loop);
+      return;
+    }
+
+    const data = imageData.data;
 
     // Calculate average red and green channel values
     let redSum = 0;
@@ -442,6 +479,11 @@ export class RPPGDetector {
 
     const avgRed = redSum / pixelCount;
     const avgGreen = greenSum / pixelCount;
+
+    // Log first few samples for debugging
+    if (this.redSamples.length === 0 || this.redSamples.length === 10) {
+      console.log(`[RPPG] Sample ${this.redSamples.length}: avgRed=${avgRed.toFixed(1)}, avgGreen=${avgGreen.toFixed(1)}`);
+    }
 
     // Detect motion (sudden brightness changes)
     if (this.lastBrightness > 0) {

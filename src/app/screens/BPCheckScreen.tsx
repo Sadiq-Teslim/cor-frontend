@@ -259,12 +259,12 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
         Place your finger over your back camera and hold still for 30 seconds.
       </p>
 
-      {/* Hidden video and canvas for rPPG processing */}
+      {/* Video for rPPG processing - visible for debugging */}
       <video
         ref={videoRef}
         playsInline
         muted
-        className="hidden"
+        className="w-full rounded-xl mb-4"
         width="320"
         height="240"
       />

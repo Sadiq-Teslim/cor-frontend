@@ -211,12 +211,12 @@ export default function FirstReadingScreen({ userId, onComplete }: Props) {
         Place your finger gently over your phone's back camera and hold still.
       </p>
 
-      {/* Hidden video and canvas for rPPG processing */}
+      {/* Video for rPPG processing - visible for debugging */}
       <video
         ref={videoRef}
         playsInline
         muted
-        className="hidden"
+        className="w-full rounded-xl mb-4"
         width="320"
         height="240"
       />
