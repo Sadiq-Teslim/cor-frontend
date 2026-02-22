@@ -146,7 +146,9 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
   const handleEarlyCompletion = useCallback(
     (result: RPPGResult) => {
       // Calculate time elapsed from start time
-      const timeElapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+      const timeElapsed = Math.round(
+        (Date.now() - startTimeRef.current) / 1000,
+      );
       processResult(result, true, timeElapsed);
     },
     [processResult],

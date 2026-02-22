@@ -14,17 +14,17 @@ export interface User {
   id: string;
   name: string;
   age: number;
-  biologicalSex: 'male' | 'female' | 'other';
+  biologicalSex: "male" | "female" | "other";
   preferredLanguage: LanguageCode;
   hasHypertension?: boolean;
   medications?: string[];
   smokes?: boolean;
   drinksAlcohol?: boolean;
-  activityLevel?: 'low' | 'moderate' | 'high';
+  activityLevel?: "low" | "moderate" | "high";
   averageSleepHours?: number;
   familyHistoryHeartDisease?: boolean;
   smartwatchConnected?: boolean;
-  smartwatchType?: 'apple' | 'google' | 'samsung' | 'fitbit';
+  smartwatchType?: "apple" | "google" | "samsung" | "fitbit";
   createdAt: string;
   updatedAt: string;
 }
@@ -32,16 +32,16 @@ export interface User {
 export interface OnboardingData {
   name: string;
   age: number;
-  biologicalSex: 'male' | 'female' | 'other';
+  biologicalSex: "male" | "female" | "other";
   preferredLanguage: LanguageCode;
   hasHypertension?: string;
   medications?: string;
   smokes?: boolean;
   drinksAlcohol?: boolean;
-  activityLevel?: 'low' | 'moderate' | 'high';
+  activityLevel?: "low" | "moderate" | "high";
   averageSleepHours?: number;
   smartwatchConnected?: boolean;
-  smartwatchType?: 'apple' | 'google' | 'samsung' | 'fitbit';
+  smartwatchType?: "apple" | "google" | "samsung" | "fitbit";
 }
 
 // Health types
@@ -64,7 +64,7 @@ export interface Baseline {
 
 export interface CSSResult {
   score: number;
-  trend: 'improving' | 'stable' | 'worsening';
+  trend: "improving" | "stable" | "worsening";
   worseningDays: number;
   shouldAlert: boolean;
   hrvDelta: number;
@@ -88,7 +88,7 @@ export interface BPCheckResponse {
     date: string;
   };
   context: {
-    comparedToAverage: 'normal' | 'elevated' | 'lower';
+    comparedToAverage: "normal" | "elevated" | "lower";
     message: string;
     recommendation: string;
   };
@@ -114,7 +114,7 @@ export interface BPReadingHistory {
 
 export interface FirstReadingResponse {
   message: string;
-  hrvStatus: 'normal' | 'low' | 'high';
+  hrvStatus: "normal" | "low" | "high";
   reading: {
     hrv: number;
     heartRate: number;
@@ -129,7 +129,7 @@ export interface FoodAnalysis {
   calories?: number;
   sodium?: number;
   potassium?: number;
-  bpImpact: 'low' | 'moderate' | 'high';
+  bpImpact: "low" | "moderate" | "high";
   message: string;
 }
 
@@ -253,27 +253,32 @@ export interface VoiceResponse {
 // Daily Tip
 export interface DailyTip {
   tip: string;
-  category: 'general' | 'stress_management' | 'sleep' | 'activity' | 'maintenance';
+  category:
+    | "general"
+    | "stress_management"
+    | "sleep"
+    | "activity"
+    | "maintenance";
   language: string;
 }
 
 // Language codes
-export type LanguageCode = 'en' | 'pcm' | 'yo' | 'ig' | 'ha' | 'fr';
+export type LanguageCode = "en" | "pcm" | "yo" | "ig" | "ha" | "fr";
 
 export const LANGUAGE_NAMES: Record<LanguageCode, string> = {
-  en: 'English',
-  pcm: 'Pidgin',
-  yo: 'Yoruba',
-  ig: 'Igbo',
-  ha: 'Hausa',
-  fr: 'French'
+  en: "English",
+  pcm: "Pidgin",
+  yo: "Yoruba",
+  ig: "Igbo",
+  ha: "Hausa",
+  fr: "French",
 };
 
 export const LANGUAGE_MAP: Record<string, LanguageCode> = {
-  'English': 'en',
-  'Pidgin': 'pcm',
-  'Yoruba': 'yo',
-  'Igbo': 'ig',
-  'Hausa': 'ha',
-  'French': 'fr'
+  English: "en",
+  Pidgin: "pcm",
+  Yoruba: "yo",
+  Igbo: "ig",
+  Hausa: "ha",
+  French: "fr",
 };

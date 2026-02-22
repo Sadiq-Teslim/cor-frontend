@@ -205,12 +205,14 @@ export default function HomeScreen({
             {lastBP ? (
               <>
                 <div className="text-xl font-bold">
-                  {lastBP.systolic && lastBP.diastolic 
-                    ? `${lastBP.systolic}/${lastBP.diastolic}` 
+                  {lastBP.systolic && lastBP.diastolic
+                    ? `${lastBP.systolic}/${lastBP.diastolic}`
                     : `${lastBP.heartRate || "--"} bpm`}
                 </div>
                 <div className="text-xs mt-1" style={{ color: "#8896A8" }}>
-                  {lastBP.systolic ? `HR: ${lastBP.heartRate || "--"} bpm` : `HRV: ${lastBP.hrv || "--"}ms`}
+                  {lastBP.systolic
+                    ? `HR: ${lastBP.heartRate || "--"} bpm`
+                    : `HRV: ${lastBP.hrv || "--"}ms`}
                 </div>
               </>
             ) : (

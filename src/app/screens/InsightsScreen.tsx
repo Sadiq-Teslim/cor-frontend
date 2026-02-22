@@ -28,9 +28,12 @@ interface ActivityData {
 }
 
 const getBPCategory = (systolic: number, diastolic: number) => {
-  if (systolic < 120 && diastolic < 80) return { text: "Normal", color: "#00E5CC" };
-  if (systolic < 130 && diastolic < 80) return { text: "Elevated", color: "#F5A623" };
-  if (systolic < 140 || diastolic < 90) return { text: "High Stage 1", color: "#FF9500" };
+  if (systolic < 120 && diastolic < 80)
+    return { text: "Normal", color: "#00E5CC" };
+  if (systolic < 130 && diastolic < 80)
+    return { text: "Elevated", color: "#F5A623" };
+  if (systolic < 140 || diastolic < 90)
+    return { text: "High Stage 1", color: "#FF9500" };
   return { text: "High Stage 2", color: "#FF6B6B" };
 };
 
@@ -74,8 +77,10 @@ export default function InsightsScreen({ userId, onBack }: Props) {
       steps: Math.floor((hour / 24) * 8000) + Math.floor(Math.random() * 1000),
       calories: Math.floor((hour / 24) * 400) + Math.floor(Math.random() * 50),
       distance: Number(((hour / 24) * 5).toFixed(1)),
-      activeMinutes: Math.floor((hour / 24) * 60) + Math.floor(Math.random() * 10),
-      floorsClimbed: Math.floor((hour / 24) * 10) + Math.floor(Math.random() * 3),
+      activeMinutes:
+        Math.floor((hour / 24) * 60) + Math.floor(Math.random() * 10),
+      floorsClimbed:
+        Math.floor((hour / 24) * 10) + Math.floor(Math.random() * 3),
     });
   }, [userId]);
 
@@ -217,9 +222,15 @@ export default function InsightsScreen({ userId, onBack }: Props) {
                   </thead>
                   <tbody>
                     {readings.slice(0, 10).map((reading, i) => {
-                      const bpCategory = getBPCategory(reading.systolic, reading.diastolic);
+                      const bpCategory = getBPCategory(
+                        reading.systolic,
+                        reading.diastolic,
+                      );
                       return (
-                        <tr key={reading.id || i} style={{ borderTop: "1px solid #1E2D45" }}>
+                        <tr
+                          key={reading.id || i}
+                          style={{ borderTop: "1px solid #1E2D45" }}
+                        >
                           <td className="px-3 py-3 text-sm">
                             {formatDate(reading.date)}
                           </td>
