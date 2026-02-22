@@ -60,6 +60,8 @@ export function useWakeWord({
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const restartTimeoutRef = useRef<number | null>(null);
+  const isStartingRef = useRef(false);
+  const hasPermissionDeniedRef = useRef(false);
 
   // Check if Web Speech API is supported
   useEffect(() => {
@@ -69,9 +71,16 @@ export function useWakeWord({
   }, []);
 
   const startListening = useCallback(() => {
+    // Don't start if already starting or permission denied
+    if (isStartingRef.current || hasPermissionDeniedRef.current) {
+      return;
+    }
+
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition || !enabled) return;
+
+    isStartingRef.current = true;
 
     // Clean up existing recognition
     if (recognitionRef.current) {
@@ -90,6 +99,7 @@ export function useWakeWord({
     recognition.lang = "en-US"; // Start with English, wake word works in all languages
 
     recognition.onstart = () => {
+      isStartingRef.current = false;
       setIsListening(true);
       onListening?.(true);
     };
@@ -121,7 +131,7 @@ export function useWakeWord({
 
         if (detected) {
           console.log("[WakeWord] Detected:", transcript);
-          // Stop recognition briefly and trigger wake callback
+          // Stop recognition and trigger wake callback
           recognition.stop();
           onWake();
           return;
@@ -131,26 +141,40 @@ export function useWakeWord({
 
     recognition.onerror = (event) => {
       console.warn("[WakeWord] Error:", event.error);
+      isStartingRef.current = false;
       setIsListening(false);
       onListening?.(false);
 
-      // Auto-restart on certain errors
-      if (event.error !== "aborted" && enabled) {
+      // Permission denied - don't retry
+      if (event.error === "not-allowed") {
+        console.warn("[WakeWord] Microphone permission denied");
+        hasPermissionDeniedRef.current = true;
+        return;
+      }
+
+      // Aborted - don't retry
+      if (event.error === "aborted") {
+        return;
+      }
+
+      // Network error - retry with longer delay
+      if (enabled && event.error === "network") {
         restartTimeoutRef.current = window.setTimeout(() => {
           startListening();
-        }, 1000);
+        }, 3000);
       }
     };
 
     recognition.onend = () => {
+      isStartingRef.current = false;
       setIsListening(false);
       onListening?.(false);
 
-      // Auto-restart if still enabled
-      if (enabled && recognitionRef.current === recognition) {
+      // Auto-restart only if enabled, permission not denied, and this is still the current instance
+      if (enabled && !hasPermissionDeniedRef.current && recognitionRef.current === recognition) {
         restartTimeoutRef.current = window.setTimeout(() => {
           startListening();
-        }, 500);
+        }, 1000);
       }
     };
 
@@ -158,6 +182,14 @@ export function useWakeWord({
       recognition.start();
     } catch (err) {
       console.warn("[WakeWord] Failed to start:", err);
+      isStartingRef.current = false;
+      // Don't retry if it's a permission error
+      if ((err as any)?.name === "NotAllowedError") {
+        console.warn("[WakeWord] Microphone permission not granted");
+        hasPermissionDeniedRef.current = true;
+        setIsListening(false);
+        onListening?.(false);
+      }
     }
   }, [enabled, onWake, onListening]);
 
@@ -166,6 +198,9 @@ export function useWakeWord({
       clearTimeout(restartTimeoutRef.current);
       restartTimeoutRef.current = null;
     }
+
+    isStartingRef.current = false;
+    hasPermissionDeniedRef.current = false;
 
     if (recognitionRef.current) {
       try {
