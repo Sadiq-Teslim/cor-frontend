@@ -1,35 +1,43 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { voiceApi } from '../api';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { voiceApi } from "../api";
 
-const API_BASE = 'https://cor-api.onrender.com';
-const PREGEN_LANGS = ['en', 'yo', 'ha'];
+const API_BASE = "https://cor-api.onrender.com";
+const PREGEN_LANGS = ["en", "yo", "ha"];
 
 const Q_FILES = [
-  'question-1-name.mp3',
-  'question-2-age.mp3',
-  'question-3-sex.mp3',
-  'question-4-hypertension.mp3',
-  'question-5-medications.mp3',
-  'question-6-smoke-drink.mp3',
-  'question-7-activity.mp3',
-  'question-8-sleep.mp3',
+  "question-1-name.mp3",
+  "question-2-age.mp3",
+  "question-3-sex.mp3",
+  "question-4-hypertension.mp3",
+  "question-5-medications.mp3",
+  "question-6-smoke-drink.mp3",
+  "question-7-activity.mp3",
+  "question-8-sleep.mp3",
 ];
 
 const Q_TEXTS = [
-  'What is your name?',
-  'How old are you?',
-  'What is your biological sex?',
-  'Have you ever been diagnosed with high blood pressure?',
-  'Do you take regular medication?',
-  'Do you smoke or drink alcohol?',
-  'How active are you?',
-  'How many hours do you sleep on average?',
+  "What is your name?",
+  "How old are you?",
+  "What is your biological sex?",
+  "Have you ever been diagnosed with high blood pressure?",
+  "Do you take regular medication?",
+  "Do you smoke or drink alcohol?",
+  "How active are you?",
+  "How many hours do you sleep on average?",
 ];
 
-export type VoiceState = 'idle' | 'playing' | 'listening' | 'recording' | 'transcribing';
+export type VoiceState =
+  | "idle"
+  | "playing"
+  | "listening"
+  | "recording"
+  | "transcribing";
 
-export function useVoiceOnboarding(langCode: string, onResult: (text: string) => void) {
-  const [voiceState, setVoiceState] = useState<VoiceState>('idle');
+export function useVoiceOnboarding(
+  langCode: string,
+  onResult: (text: string) => void,
+) {
+  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [micLevel, setMicLevel] = useState(0);
   const [voiceReady, setVoiceReady] = useState(false);
 
@@ -76,13 +84,13 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
     if (!streamRef.current || recRef.current) return;
     recRef.current = true;
     chunksRef.current = [];
-    setVoiceState('recording');
+    setVoiceState("recording");
 
-    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : MediaRecorder.isTypeSupported('audio/webm')
-        ? 'audio/webm'
-        : 'audio/mp4';
+    const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "audio/mp4";
 
     const rec = new MediaRecorder(streamRef.current, { mimeType: mime });
     recorderRef.current = rec;
@@ -99,26 +107,26 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
     cancelRaf();
 
     const rec = recorderRef.current;
-    if (rec && rec.state === 'recording') {
+    if (rec && rec.state === "recording") {
       rec.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: rec.mimeType });
         if (blob.size < 200) {
-          setVoiceState('listening');
+          setVoiceState("listening");
           return;
         }
-        setVoiceState('transcribing');
+        setVoiceState("transcribing");
         try {
-          const file = new File([blob], 'answer.webm', { type: rec.mimeType });
+          const file = new File([blob], "answer.webm", { type: rec.mimeType });
           const res = await voiceApi.transcribe(file);
           cbRef.current(res.text);
         } catch (err) {
-          console.error('Transcription failed:', err);
+          console.error("Transcription failed:", err);
         }
-        setVoiceState('idle');
+        setVoiceState("idle");
       };
       rec.stop();
     } else {
-      setVoiceState('idle');
+      setVoiceState("idle");
     }
   }
 
@@ -157,7 +165,11 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
   const initMic = useCallback(async () => {
     try {
       const s = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
       streamRef.current = s;
       const ctx = new AudioContext();
@@ -167,27 +179,46 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
       an.fftSize = 512;
       src.connect(an);
       analyserRef.current = an;
+      
+      // Resume audio context to enable playback (user interaction happened via mic permission)
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+      
+      // Unlock audio playback by playing a silent sound (helps with autoplay policies)
+      try {
+        const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+        await silentAudio.play();
+        console.log('[Voice] Audio unlocked via silent play');
+      } catch (e) {
+        console.log('[Voice] Silent audio unlock not needed or failed:', e);
+      }
+      
       setVoiceReady(true);
+      console.log('[Voice] Mic initialized successfully');
       return true;
-    } catch {
+    } catch (e) {
+      console.error('[Voice] Mic init failed:', e);
       setVoiceReady(false);
       return false;
     }
   }, []);
 
   const playQuestion = useCallback(async (step: number) => {
+    console.log('[Voice] playQuestion called for step:', step, 'lang:', langRef.current);
+    
     // Reset
     haltAudio();
     if (recRef.current) endCapture();
     cancelRaf();
-    setVoiceState('playing');
+    setVoiceState("playing");
 
     // Resume AudioContext if suspended (required for some browsers)
-    if (ctxRef.current?.state === 'suspended') {
+    if (ctxRef.current?.state === "suspended") {
       try {
         await ctxRef.current.resume();
       } catch (e) {
-        console.warn('Could not resume AudioContext:', e);
+        console.warn("Could not resume AudioContext:", e);
       }
     }
 
@@ -196,30 +227,45 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
       if (PREGEN_LANGS.includes(langRef.current)) {
         url = `${API_BASE}/api/audio/onboarding/${langRef.current}/${Q_FILES[step - 1]}`;
       } else {
+        console.log('[Voice] Fetching TTS for:', Q_TEXTS[step - 1]);
         const blob = await voiceApi.speak(Q_TEXTS[step - 1], langRef.current);
         url = URL.createObjectURL(blob);
       }
+      console.log('[Voice] Audio URL:', url);
 
-      const el = new Audio(url);
-      el.crossOrigin = 'anonymous'; // Enable CORS for audio
+      // Fetch audio as blob to ensure network request happens and we have the data
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Audio fetch failed: ${response.status}`);
+      }
+      const audioBlob = await response.blob();
+      const blobUrl = URL.createObjectURL(audioBlob);
+      console.log('[Voice] Audio fetched, size:', audioBlob.size);
+
+      const el = new Audio(blobUrl);
       audioEl.current = el;
 
       el.onended = () => {
+        console.log('[Voice] Audio playback ended');
+        URL.revokeObjectURL(blobUrl);
         audioEl.current = null;
-        if (!recRef.current) setVoiceState('listening');
+        if (!recRef.current) setVoiceState("listening");
       };
       el.onerror = (e) => {
-        console.error('Audio playback error:', e);
+        console.error("[Voice] Audio playback error:", e, el.error);
+        URL.revokeObjectURL(blobUrl);
         audioEl.current = null;
-        if (!recRef.current) setVoiceState('listening');
+        if (!recRef.current) setVoiceState("listening");
       };
 
+      console.log('[Voice] Attempting to play audio...');
       await el.play();
+      console.log('[Voice] Audio playing successfully');
       // Start VAD monitoring for barge-in
       if (streamRef.current) monitor();
     } catch (e) {
-      console.error('Audio play failed:', e);
-      setVoiceState('listening');
+      console.error("[Voice] Audio play failed:", e);
+      setVoiceState("listening");
       if (streamRef.current) monitor();
     }
   }, []);
@@ -227,22 +273,29 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
   const playConfirmation = useCallback(async () => {
     try {
       // Resume AudioContext if suspended
-      if (ctxRef.current?.state === 'suspended') {
+      if (ctxRef.current?.state === "suspended") {
         await ctxRef.current.resume();
       }
-      
+
       let url: string;
       if (PREGEN_LANGS.includes(langRef.current)) {
         url = `${API_BASE}/api/audio/confirmations/${langRef.current}/got-it.mp3`;
       } else {
-        const blob = await voiceApi.speak('Got it!', langRef.current);
+        const blob = await voiceApi.speak("Got it!", langRef.current);
         url = URL.createObjectURL(blob);
       }
-      const audio = new Audio(url);
-      audio.crossOrigin = 'anonymous';
+      
+      // Fetch audio as blob
+      const response = await fetch(url);
+      if (!response.ok) return;
+      const audioBlob = await response.blob();
+      const blobUrl = URL.createObjectURL(audioBlob);
+      
+      const audio = new Audio(blobUrl);
+      audio.onended = () => URL.revokeObjectURL(blobUrl);
       await audio.play();
     } catch (e) {
-      console.error('Confirmation audio failed:', e);
+      console.error("Confirmation audio failed:", e);
       // silent fail
     }
   }, []);
@@ -261,9 +314,9 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
     haltAudio();
     cancelRaf();
     clearSil();
-    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+    if (recorderRef.current?.state === "recording") recorderRef.current.stop();
     recRef.current = false;
-    setVoiceState('idle');
+    setVoiceState("idle");
     setMicLevel(0);
   }, []);
 
@@ -273,11 +326,21 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
       haltAudio();
       cancelRaf();
       clearSil();
-      if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
-      streamRef.current?.getTracks().forEach(t => t.stop());
-      if (ctxRef.current?.state !== 'closed') ctxRef.current?.close();
+      if (recorderRef.current?.state === "recording")
+        recorderRef.current.stop();
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      if (ctxRef.current?.state !== "closed") ctxRef.current?.close();
     };
   }, []);
 
-  return { voiceState, voiceReady, micLevel, initMic, playQuestion, playConfirmation, tapMic, stopAll };
+  return {
+    voiceState,
+    voiceReady,
+    micLevel,
+    initMic,
+    playQuestion,
+    playConfirmation,
+    tapMic,
+    stopAll,
+  };
 }

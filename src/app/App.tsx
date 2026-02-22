@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useUser } from '../context/UserContext';
-import { userApi, medicalApi } from '../api';
-import { LANGUAGE_MAP } from '../api/types';
-import type { AlertData } from '../api/types';
-import type { OnboardingFormData } from './screens';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useUser } from "../context/UserContext";
+import { userApi, medicalApi } from "../api";
+import { LANGUAGE_MAP } from "../api/types";
+import type { AlertData } from "../api/types";
+import type { OnboardingFormData } from "./screens";
 
-import { Home, Lightbulb, ClipboardPen, Settings, Mic } from 'lucide-react';
+import { Home, Lightbulb, ClipboardPen, Settings, Mic } from "lucide-react";
 
 import {
   WelcomeScreen,
@@ -23,16 +23,22 @@ import {
   SettingsScreen,
   AlertOverlay,
   HeyCorModal,
-} from './screens';
+} from "./screens";
 
 export default function App() {
   const { user, userId, setUser, setUserId } = useUser();
 
-  const [currentScreen, setCurrentScreen] = useState('screen-1');
-  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [currentScreen, setCurrentScreen] = useState("screen-1");
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [onboardingData, setOnboardingData] = useState<OnboardingFormData>({
-    name: '', age: '', sex: '', highBP: '',
-    medication: '', smokeDrink: '', activity: '', sleep: ''
+    name: "",
+    age: "",
+    sex: "",
+    highBP: "",
+    medication: "",
+    smokeDrink: "",
+    activity: "",
+    sleep: "",
   });
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [fileUploaded, setFileUploaded] = useState(false);
@@ -40,24 +46,30 @@ export default function App() {
   const [showHeyCor, setShowHeyCor] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertData, setAlertData] = useState<AlertData | null>(null);
-  const [activeNav, setActiveNav] = useState('home');
+  const [activeNav, setActiveNav] = useState("home");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Refs to track latest values for callbacks (avoid stale closures)
   const onboardingDataRef = useRef(onboardingData);
   const selectedLanguageRef = useRef(selectedLanguage);
   const connectedDevicesRef = useRef(connectedDevices);
-  
+
   // Keep refs in sync with state
-  useEffect(() => { onboardingDataRef.current = onboardingData; }, [onboardingData]);
-  useEffect(() => { selectedLanguageRef.current = selectedLanguage; }, [selectedLanguage]);
-  useEffect(() => { connectedDevicesRef.current = connectedDevices; }, [connectedDevices]);
+  useEffect(() => {
+    onboardingDataRef.current = onboardingData;
+  }, [onboardingData]);
+  useEffect(() => {
+    selectedLanguageRef.current = selectedLanguage;
+  }, [selectedLanguage]);
+  useEffect(() => {
+    connectedDevicesRef.current = connectedDevices;
+  }, [connectedDevices]);
 
   // On mount, if user already exists, skip to home
   useEffect(() => {
     if (userId && user) {
-      setOnboardingData(prev => ({ ...prev, name: user.name }));
-      setCurrentScreen('screen-7');
+      setOnboardingData((prev) => ({ ...prev, name: user.name }));
+      setCurrentScreen("screen-7");
     }
   }, [user]);
 
@@ -67,14 +79,31 @@ export default function App() {
   };
 
   const goBack = () => {
-    setActiveNav('home');
-    showScreen('screen-7');
+    setActiveNav("home");
+    showScreen("screen-7");
   };
 
   // Map UI values to API values
-  const mapSex = (sex: string) => sex === 'Male' ? 'male' as const : sex === 'Female' ? 'female' as const : 'other' as const;
-  const mapActivity = (a: string) => a === 'Sedentary' ? 'low' as const : a === 'Moderate' ? 'moderate' as const : 'high' as const;
-  const mapSmartwatch = (d: string) => d.includes('Apple') ? 'apple' as const : d.includes('Google') ? 'google' as const : d.includes('Samsung') ? 'samsung' as const : 'fitbit' as const;
+  const mapSex = (sex: string) =>
+    sex === "Male"
+      ? ("male" as const)
+      : sex === "Female"
+        ? ("female" as const)
+        : ("other" as const);
+  const mapActivity = (a: string) =>
+    a === "Sedentary"
+      ? ("low" as const)
+      : a === "Moderate"
+        ? ("moderate" as const)
+        : ("high" as const);
+  const mapSmartwatch = (d: string) =>
+    d.includes("Apple")
+      ? ("apple" as const)
+      : d.includes("Google")
+        ? ("google" as const)
+        : d.includes("Samsung")
+          ? ("samsung" as const)
+          : ("fitbit" as const);
 
   // Complete onboarding via API - uses refs to always read latest state
   const completeOnboarding = useCallback(async () => {
@@ -85,28 +114,30 @@ export default function App() {
 
     setIsSubmitting(true);
     try {
-      const langCode = LANGUAGE_MAP[language] || 'en';
-      const smokesOrDrinks = data.smokeDrink === 'Yes' || data.smokeDrink === 'Sometimes';
+      const langCode = LANGUAGE_MAP[language] || "en";
+      const smokesOrDrinks =
+        data.smokeDrink === "Yes" || data.smokeDrink === "Sometimes";
       const response = await userApi.onboard({
         name: data.name,
         age: parseInt(data.age) || 25,
         biologicalSex: mapSex(data.sex),
         preferredLanguage: langCode,
-        hasHypertension: data.highBP || 'No',
-        medications: data.medication === 'Yes' ? undefined : 'No',
+        hasHypertension: data.highBP || "No",
+        medications: data.medication === "Yes" ? undefined : "No",
         smokes: smokesOrDrinks,
         drinksAlcohol: smokesOrDrinks,
         activityLevel: mapActivity(data.activity),
         averageSleepHours: parseInt(data.sleep) || 7,
         smartwatchConnected: devices.length > 0,
-        smartwatchType: devices.length > 0 ? mapSmartwatch(devices[0]) : undefined,
+        smartwatchType:
+          devices.length > 0 ? mapSmartwatch(devices[0]) : undefined,
       });
       setUser(response.user);
       setUserId(response.user.id);
-      showScreen('screen-4');
+      showScreen("screen-4");
     } catch (err) {
-      console.error('Onboarding failed:', err);
-      alert('Failed to save your profile. Please try again.');
+      console.error("Onboarding failed:", err);
+      alert("Failed to save your profile. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -129,10 +160,18 @@ export default function App() {
   const navigateTo = (tab: string) => {
     setActiveNav(tab);
     switch (tab) {
-      case 'home': showScreen('screen-7'); break;
-      case 'insights': showScreen('screen-11'); break;
-      case 'log': showScreen('screen-9'); break;
-      case 'settings': showScreen('screen-15'); break;
+      case "home":
+        showScreen("screen-7");
+        break;
+      case "insights":
+        showScreen("screen-11");
+        break;
+      case "log":
+        showScreen("screen-9");
+        break;
+      case "settings":
+        showScreen("screen-15");
+        break;
     }
   };
 
@@ -146,16 +185,16 @@ export default function App() {
   // Render the active screen
   const renderScreen = () => {
     switch (currentScreen) {
-      case 'screen-1':
+      case "screen-1":
         return (
           <WelcomeScreen
             selectedLanguage={selectedLanguage}
             onSelectLanguage={setSelectedLanguage}
-            onContinue={() => showScreen('screen-3')}
+            onContinue={() => showScreen("screen-3")}
           />
         );
 
-      case 'screen-3':
+      case "screen-3":
         return (
           <OnboardingScreen
             data={onboardingData}
@@ -163,69 +202,77 @@ export default function App() {
             isSubmitting={isSubmitting}
             language={selectedLanguage}
             onUpdateData={setOnboardingData}
-            onNextStep={() => setOnboardingStep(s => s + 1)}
+            onNextStep={() => setOnboardingStep((s) => s + 1)}
             onComplete={completeOnboarding}
           />
         );
 
-      case 'screen-4':
+      case "screen-4":
         return (
           <MedicalRecordsScreen
             fileUploaded={fileUploaded}
             isSubmitting={isSubmitting}
             onUploadFile={handleFileUpload}
-            onContinue={() => showScreen('screen-5')}
-            onSkip={() => showScreen('screen-5')}
+            onContinue={() => showScreen("screen-5")}
+            onSkip={() => showScreen("screen-5")}
           />
         );
 
-      case 'screen-5':
+      case "screen-5":
         return (
           <SmartwatchScreen
             connectedDevices={connectedDevices}
-            onConnect={(device) => setConnectedDevices(prev => [...prev, device])}
-            onContinue={() => showScreen('screen-6')}
-            onSkip={() => showScreen('screen-6')}
+            onConnect={(device) =>
+              setConnectedDevices((prev) => [...prev, device])
+            }
+            onContinue={() => showScreen("screen-6")}
+            onSkip={() => showScreen("screen-6")}
           />
         );
 
-      case 'screen-6':
+      case "screen-6":
         return (
           <FirstReadingScreen
             userId={userId}
-            onComplete={() => showScreen('screen-7')}
+            onComplete={() => showScreen("screen-7")}
           />
         );
 
-      case 'screen-7':
+      case "screen-7":
         return (
           <HomeScreen
             userId={userId}
-            userName={user?.name || onboardingData.name || 'there'}
+            userName={user?.name || onboardingData.name || "there"}
             onNavigate={showScreen}
             onShowAlert={handleShowAlert}
           />
         );
 
-      case 'screen-8':
+      case "screen-8":
         return <BPCheckScreen userId={userId} onBack={goBack} />;
 
-      case 'screen-9':
-        return <FoodLoggerScreen userId={userId} selectedLanguage={selectedLanguage} onBack={goBack} />;
+      case "screen-9":
+        return (
+          <FoodLoggerScreen
+            userId={userId}
+            selectedLanguage={selectedLanguage}
+            onBack={goBack}
+          />
+        );
 
-      case 'screen-10':
+      case "screen-10":
         return <MedicationScreen userId={userId} onBack={goBack} />;
 
-      case 'screen-11':
+      case "screen-11":
         return <InsightsScreen userId={userId} onBack={goBack} />;
 
-      case 'screen-12':
+      case "screen-12":
         return <TrendsScreen userId={userId} onBack={goBack} />;
 
-      case 'screen-14':
+      case "screen-14":
         return <ClinicalShareScreen userId={userId} onBack={goBack} />;
 
-      case 'screen-15':
+      case "screen-15":
         return (
           <SettingsScreen
             selectedLanguage={selectedLanguage}
@@ -244,20 +291,29 @@ export default function App() {
     <>
       <div
         className="relative mx-auto max-w-[480px] min-h-screen"
-        style={{ background: '#0A0F1E', fontFamily: 'Inter, sans-serif', color: '#F0F4FF' }}
+        style={{
+          background: "#0A0F1E",
+          fontFamily: "Inter, sans-serif",
+          color: "#F0F4FF",
+        }}
       >
-        <div className="min-h-screen animate-fadeIn">
-          {renderScreen()}
-        </div>
+        <div className="min-h-screen animate-fadeIn">{renderScreen()}</div>
 
         {/* Alert Overlay */}
         {showAlert && (
-          <AlertOverlay alertData={alertData} onDismiss={() => setShowAlert(false)} />
+          <AlertOverlay
+            alertData={alertData}
+            onDismiss={() => setShowAlert(false)}
+          />
         )}
 
         {/* Hey Cor Modal */}
         {showHeyCor && (
-          <HeyCorModal userId={userId} selectedLanguage={selectedLanguage} onClose={() => setShowHeyCor(false)} />
+          <HeyCorModal
+            userId={userId}
+            selectedLanguage={selectedLanguage}
+            onClose={() => setShowHeyCor(false)}
+          />
         )}
 
         {/* Hey Cor Button */}
@@ -265,7 +321,11 @@ export default function App() {
           <button
             onClick={() => setShowHeyCor(true)}
             className="fixed bottom-20 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center z-40"
-            style={{ background: '#00E5CC', color: '#0A0F1E', animation: 'pulse 2s ease-in-out infinite' }}
+            style={{
+              background: "#00E5CC",
+              color: "#0A0F1E",
+              animation: "pulse 2s ease-in-out infinite",
+            }}
           >
             <Mic size={24} />
           </button>
@@ -275,19 +335,27 @@ export default function App() {
         {isPostOnboarding && (
           <nav
             className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[480px] h-16 flex items-center justify-around z-[9999]"
-            style={{ background: '#111827', borderTop: '1px solid #1E2D45' }}
+            style={{ background: "#111827", borderTop: "1px solid #1E2D45" }}
           >
             {[
-              { key: 'home', icon: <Home size={20} />, label: 'Home' },
-              { key: 'insights', icon: <Lightbulb size={20} />, label: 'Insights' },
-              { key: 'log', icon: <ClipboardPen size={20} />, label: 'Log' },
-              { key: 'settings', icon: <Settings size={20} />, label: 'Settings' },
-            ].map(tab => (
+              { key: "home", icon: <Home size={20} />, label: "Home" },
+              {
+                key: "insights",
+                icon: <Lightbulb size={20} />,
+                label: "Insights",
+              },
+              { key: "log", icon: <ClipboardPen size={20} />, label: "Log" },
+              {
+                key: "settings",
+                icon: <Settings size={20} />,
+                label: "Settings",
+              },
+            ].map((tab) => (
               <div
                 key={tab.key}
                 onClick={() => navigateTo(tab.key)}
                 className="flex flex-col items-center justify-center flex-1 text-[11px] font-semibold cursor-pointer px-2 py-2"
-                style={{ color: activeNav === tab.key ? '#00E5CC' : '#8896A8' }}
+                style={{ color: activeNav === tab.key ? "#00E5CC" : "#8896A8" }}
               >
                 <div className="mb-1">{tab.icon}</div>
                 <div>{tab.label}</div>
