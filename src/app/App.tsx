@@ -27,7 +27,7 @@ import {
 } from "./screens";
 
 export default function App() {
-  const { user, userId, isLoading, setUser, setUserId } = useUser();
+  const { user, userId, isLoading, setUser, setUserId, logout } = useUser();
 
   const [currentScreen, setCurrentScreen] = useState("screen-1");
   const [selectedLanguage, setSelectedLanguage] = useState("English");
@@ -198,6 +198,22 @@ export default function App() {
     }
   };
 
+  const handleSignOut = () => {
+    logout();
+    setCurrentScreen("screen-1");
+    setOnboardingStep(1);
+    setOnboardingData({
+      name: "", age: "", sex: "", highBP: "", medication: "",
+      smokeDrink: "", activity: "", sleep: "", medicalFile: "",
+    });
+    setFileUploaded(false);
+    setConnectedDevices([]);
+    setPendingMedicalFile(null);
+    setActiveNav("home");
+    setShowHeyCor(false);
+    setWakeWordEnabled(false);
+  };
+
   const navigateTo = (tab: string) => {
     setActiveNav(tab);
     switch (tab) {
@@ -350,6 +366,7 @@ export default function App() {
             connectedDevices={connectedDevices}
             fileUploaded={fileUploaded}
             user={user}
+            onSignOut={handleSignOut}
           />
         );
 
