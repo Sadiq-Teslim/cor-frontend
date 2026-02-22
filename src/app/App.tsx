@@ -4,8 +4,9 @@ import { userApi, medicalApi } from "../api";
 import { LANGUAGE_MAP } from "../api/types";
 import type { AlertData } from "../api/types";
 import type { OnboardingFormData } from "./screens";
+import { useWakeWord } from "../hooks";
 
-import { Home, Clock, ClipboardPen, Settings, Mic } from "lucide-react";
+import { Home, Clock, ClipboardPen, Settings, Mic, MicOff } from "lucide-react";
 
 import {
   WelcomeScreen,
@@ -48,6 +49,8 @@ export default function App() {
   const [alertData, setAlertData] = useState<AlertData | null>(null);
   const [activeNav, setActiveNav] = useState("home");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [wakeWordEnabled, setWakeWordEnabled] = useState(true);
+  const [isWakeWordListening, setIsWakeWordListening] = useState(false);
 
   // Refs to track latest values for callbacks (avoid stale closures)
   const onboardingDataRef = useRef(onboardingData);
@@ -64,6 +67,30 @@ export default function App() {
   useEffect(() => {
     connectedDevicesRef.current = connectedDevices;
   }, [connectedDevices]);
+
+  // Determine if we should show post-onboarding UI
+  const isPostOnboarding = [
+    "screen-7",
+    "screen-8",
+    "screen-9",
+    "screen-10",
+    "screen-11",
+    "screen-12",
+    "screen-13",
+    "screen-14",
+  ].includes(currentScreen);
+
+  // Wake word detection - "Hey Cor" activates voice assistant
+  const { isListening: wakeIsListening, isSupported: wakeSupported } =
+    useWakeWord({
+      wakePhrase: "hey cor",
+      enabled: wakeWordEnabled && isPostOnboarding && !showHeyCor,
+      onWake: () => {
+        console.log("[App] Wake word detected - opening Hey Cor");
+        setShowHeyCor(true);
+      },
+      onListening: setIsWakeWordListening,
+    });
 
   // On mount, if user already exists, skip to home
   useEffect(() => {
@@ -179,8 +206,6 @@ export default function App() {
     setAlertData(data);
     setShowAlert(true);
   };
-
-  const isPostOnboarding = !currentScreen.match(/^screen-[1-6]$/);
 
   // Render the active screen
   const renderScreen = () => {
@@ -316,19 +341,48 @@ export default function App() {
           />
         )}
 
-        {/* Hey Cor Button */}
+        {/* Hey Cor Button with Wake Word Indicator */}
         {isPostOnboarding && (
-          <button
-            onClick={() => setShowHeyCor(true)}
-            className="fixed bottom-20 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center z-40"
-            style={{
-              background: "#00E5CC",
-              color: "#0A0F1E",
-              animation: "pulse 2s ease-in-out infinite",
-            }}
-          >
-            <Mic size={24} />
-          </button>
+          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
+            {/* Wake word status */}
+            {wakeSupported && wakeWordEnabled && (
+              <div
+                className="mb-2 px-3 py-1 rounded-full text-xs flex items-center gap-1"
+                style={{
+                  background: isWakeWordListening
+                    ? "rgba(0, 229, 204, 0.2)"
+                    : "rgba(136, 150, 168, 0.2)",
+                  color: isWakeWordListening ? "#00E5CC" : "#8896A8",
+                }}
+              >
+                {isWakeWordListening ? <Mic size={12} /> : <MicOff size={12} />}
+                {isWakeWordListening ? 'Say "Hey Cor"' : "Wake word off"}
+              </div>
+            )}
+            <button
+              onClick={() => setShowHeyCor(true)}
+              className="w-14 h-14 rounded-full flex items-center justify-center relative"
+              style={{
+                background: isWakeWordListening ? "#00E5CC" : "#00E5CC",
+                color: "#0A0F1E",
+                animation: isWakeWordListening
+                  ? "pulse 1s ease-in-out infinite"
+                  : "pulse 2s ease-in-out infinite",
+              }}
+            >
+              <Mic size={24} />
+              {/* Listening indicator ring */}
+              {isWakeWordListening && (
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    border: "2px solid #00E5CC",
+                    animation: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
+                  }}
+                />
+              )}
+            </button>
+          </div>
         )}
 
         {/* Bottom Navigation */}

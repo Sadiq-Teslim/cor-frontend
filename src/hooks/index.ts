@@ -109,5 +109,7 @@ export function useCountdown(initialValue: number, onComplete?: () => void) {
 
 export { useVoiceOnboarding } from "./useVoiceOnboarding";
 export type { VoiceState } from "./useVoiceOnboarding";
+export { useWakeWord } from "./useWakeWord";
+export { useVoiceInput } from "./useVoiceInput";
 
 export default useToast;
