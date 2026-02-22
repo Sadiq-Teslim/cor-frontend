@@ -1,49 +1,168 @@
-# Team ACE-UNILAG
+# COR – Frontend
 
-## Introducing Cor: The Groundbreaking Heart Health Companion for Working Professionals
+> From everyday data to early cardiovascular prevention.
 
-### Problem Statement
+COR is a proactive cardiovascular risk screening web application that estimates blood pressure trends using smartphone camera-based photoplethysmography (PPG), lifestyle signals, and AI-driven analysis.
 
-- **Hypertension is a silent killer:** 1 in 3 working adults die from complications of high blood pressure, often without warning.
-- **Lack of continuous monitoring:** Most professionals are too busy to visit clinics or use bulky devices, missing early signs and interventions.
-- **Global impact:** Over 1 billion people worldwide suffer from hypertension, with Africa seeing the fastest rise among urban professionals.
-
-### Our Solution
-
-- **Cor leverages the device always with you—your mobile phone—to measure, track, and guide your heart health.**
-- **rPPG technology:** Cor uses remote photoplethysmography (rPPG) via your phone camera to estimate blood pressure and heart rate, no cuffs or wearables needed.
-- **Contextual AI assistant:** Cor provides personalized, actionable advice based on your real health data, not generic tips.
-- **Wake word activation:** Just say "Hey Cor" to get instant, contextual support—anytime, anywhere.
-
-### Impact
-
-- **Continuous, accessible monitoring:** Cor empowers professionals to check their BP daily, reducing risk and improving outcomes.
-- **Groundbreaking reach:** By using smartphones, Cor can reach millions who would never buy a medical device.
-- **Early intervention:** Real-time alerts and insights help users catch hypertension before it becomes fatal.
-- **Personalized guidance:** Cor adapts advice to your lifestyle, history, and trends, making prevention actionable.
-
-### How It Works
-
-1. **Wake Cor with your voice:** Say "Hey Cor" to activate the assistant.
-2. **Measure BP with your phone:** Place your finger on the camera—Cor uses rPPG to estimate your blood pressure and heart rate.
-3. **Get instant results:** See your BP, risk level, and a short, clear explanation.
-4. **Receive personalized advice:** Cor analyzes your history and context to give tailored recommendations.
-5. **Track your progress:** All readings are saved, visualized, and used to inform future guidance.
-
-### Tech Stack
-
-- **Frontend:** React, TypeScript, Vite, Tailwind CSS
-- **Voice & rPPG:** Web Speech API, custom rPPG library
-- **UI:** Modern, mobile-first design with Lucide icons
-- **API Integration:** RESTful endpoints for health, voice, and food logging
-- **AI:** Contextual responses powered by Groq Llama-3
-
-### Miscellaneous
-
-- **Open source:** Built for impact, extensible for research and clinical validation
-- **Accessibility:** Supports multiple languages, including Yoruba, Hausa, Igbo, and Nigerian Pidgin
-- **Privacy:** All health data is encrypted and never shared without consent
+This repository contains the frontend implementation of COR.
 
 ---
 
-For questions, contributions, or demo requests, contact Team ACE-UNILAG.
+## Problem
+
+Cardiovascular diseases cause nearly 20 million deaths globally each year.
+In Nigeria, an estimated 30–35% of adults live with hypertension — many undiagnosed.
+
+Hypertension is often asymptomatic until it becomes fatal.
+
+COR aims to transform the smartphone into a first-line cardiovascular risk screening tool.
+
+---
+
+## Solution Overview
+
+COR leverages:
+
+* Smartphone camera (PPG) for pulse waveform capture
+* HRV and pulse morphology feature extraction
+* Machine learning–based blood pressure estimation
+* Longitudinal trend analysis
+* Food image analysis for sodium impact estimation
+* Sleep and activity inference from device sensors
+* Voice-enabled interaction (multilingual support)
+
+COR is not a diagnostic medical device.
+It is a screening and risk stratification tool designed to prompt early intervention.
+
+---
+
+## Frontend Features
+
+* Clean cardiovascular dashboard
+* Real-time measurement interface
+* 7-day trend visualization
+* Risk score indicator (Green / Yellow / Red)
+* Lifestyle correlation insights
+* Food image upload & analysis interface
+* Voice-guided measurement flow
+* Multilingual UI support
+* Confidence score display for transparency
+
+---
+
+## Dashboard Structure
+
+### Main Panel
+
+* Estimated Blood Pressure
+* Confidence Score
+* Cardiovascular Risk Level
+* Weekly Trend Graph
+
+### Insights Panel
+
+* HRV Score
+* Sleep Pattern Indicator
+* Activity Level Summary
+* Sodium Risk Indicator
+
+---
+
+## Tech Stack
+
+* React / Next.js (Frontend Framework)
+* TypeScript
+* Tailwind CSS (Styling)
+* Chart.js / Recharts (Data Visualization)
+* Web Speech API (Voice Interaction)
+* Camera API (PPG Capture)
+* Axios / Fetch (API Communication)
+
+---
+
+## Measurement Flow
+
+1. User activates COR via voice or button.
+2. User places finger on camera for 10 seconds.
+3. Frontend captures video frames.
+4. Signal data is sent to backend for processing.
+5. Processed results returned:
+
+   * Estimated Systolic / Diastolic BP
+   * HRV metrics
+   * Confidence score
+6. Dashboard updates with trend analysis.
+
+---
+
+## Validation Approach
+
+During pilot testing:
+
+* BP readings were paired with digital cuff measurements.
+* PPG features were extracted and fed into regression models.
+* Correlation coefficient and mean absolute error were calculated.
+
+COR is designed as a screening tool, not a replacement for certified medical devices.
+
+---
+
+## Getting Started
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/your-username/cor-frontend.git
+cd cor-frontend
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Run Development Server
+
+```bash
+npm run dev
+```
+
+App runs on:
+
+```
+http://localhost:3000
+```
+
+---
+
+## Folder Structure
+
+```
+/components
+  - Dashboard
+  - Measurement
+  - VoiceAssistant
+  - TrendChart
+/pages
+  - index.tsx
+  - dashboard.tsx
+  - measure.tsx
+/utils
+  - signalProcessing.ts
+  - api.ts
+```
+
+---
+
+## Disclaimer
+
+COR provides estimated blood pressure trends using non-invasive optical signals.
+It is not intended for medical diagnosis. Users are advised to confirm abnormal readings with certified medical devices and consult healthcare professionals.
+
+---
+
+## 👥 Team
+
+Built for Cavista Hackathon 2026
+Theme: From Data to Prevention – Healthcare as a Tool
