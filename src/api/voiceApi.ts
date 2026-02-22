@@ -29,6 +29,29 @@ export const voiceApi = {
   async speak(text: string, language: string): Promise<Blob> {
     return apiClient.postForBlob('/api/voice/speak', { text, language });
   },
+
+  // Get pre-generated audio file (onboarding, instructions, confirmations)
+  async getPregeneratedAudio(
+    category: 'onboarding' | 'instructions' | 'confirmations',
+    language: string,
+    filename: string,
+  ): Promise<Blob> {
+    const response = await fetch(
+      `https://cor-api.onrender.com/api/audio/${category}/${language}/${filename}`,
+    );
+    if (!response.ok) {
+      let errorMessage = `Failed to fetch ${category} audio file: ${filename}`;
+      try {
+        const data = await response.json();
+        errorMessage = data.error?.message || errorMessage;
+      } catch {
+        // If response is not JSON, use HTTP status
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+    return response.blob();
+  },
 };
 
 export default voiceApi;

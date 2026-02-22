@@ -75,7 +75,30 @@ async function postFormData<T>(
     method: "POST",
     body: formData,
   });
-  return handleResponse<T>(response);
+
+  if (!response.ok) {
+    let errorMessage = "An error occurred";
+    let errorCode = "UNKNOWN_ERROR";
+    try {
+      const data = await response.json();
+      errorMessage = data.error?.message || errorMessage;
+      errorCode = data.error?.code || errorCode;
+    } catch {
+      // If response is not JSON, use default error message
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new ApiError(errorMessage, errorCode);
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new ApiError(
+      data.error?.message || "An error occurred",
+      data.error?.code || "UNKNOWN_ERROR",
+    );
+  }
+
+  return data.data;
 }
 
 async function postForBlob(endpoint: string, body?: unknown): Promise<Blob> {
@@ -88,11 +111,17 @@ async function postForBlob(endpoint: string, body?: unknown): Promise<Blob> {
   });
 
   if (!response.ok) {
-    const data = await response.json();
-    throw new ApiError(
-      data.error?.message || "An error occurred",
-      data.error?.code || "UNKNOWN_ERROR",
-    );
+    let errorMessage = "An error occurred";
+    let errorCode = "UNKNOWN_ERROR";
+    try {
+      const data = await response.json();
+      errorMessage = data.error?.message || errorMessage;
+      errorCode = data.error?.code || errorCode;
+    } catch {
+      // If response is not JSON, use HTTP status
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new ApiError(errorMessage, errorCode);
   }
 
   return response.blob();

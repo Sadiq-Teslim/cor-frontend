@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { voiceApi } from "../api";
 
-const API_BASE = "https://cor-api.onrender.com";
 const PREGEN_LANGS = ["en", "yo", "ha"];
 
 const Q_FILES = [
@@ -230,24 +229,21 @@ export function useVoiceOnboarding(
     }
 
     try {
-      let url: string;
+      let audioBlob: Blob;
       if (PREGEN_LANGS.includes(langRef.current)) {
-        url = `${API_BASE}/api/audio/onboarding/${langRef.current}/${Q_FILES[step - 1]}`;
+        console.log("[Voice] Fetching pre-generated audio for:", Q_FILES[step - 1]);
+        audioBlob = await voiceApi.getPregeneratedAudio(
+          'onboarding',
+          langRef.current,
+          Q_FILES[step - 1],
+        );
       } else {
         console.log("[Voice] Fetching TTS for:", Q_TEXTS[step - 1]);
-        const blob = await voiceApi.speak(Q_TEXTS[step - 1], langRef.current);
-        url = URL.createObjectURL(blob);
+        audioBlob = await voiceApi.speak(Q_TEXTS[step - 1], langRef.current);
       }
-      console.log("[Voice] Audio URL:", url);
+      console.log("[Voice] Audio blob received, size:", audioBlob.size);
 
-      // Fetch audio as blob to ensure network request happens and we have the data
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Audio fetch failed: ${response.status}`);
-      }
-      const audioBlob = await response.blob();
       const blobUrl = URL.createObjectURL(audioBlob);
-      console.log("[Voice] Audio fetched, size:", audioBlob.size);
 
       const el = new Audio(blobUrl);
       audioEl.current = el;
@@ -284,18 +280,17 @@ export function useVoiceOnboarding(
         await ctxRef.current.resume();
       }
 
-      let url: string;
+      let audioBlob: Blob;
       if (PREGEN_LANGS.includes(langRef.current)) {
-        url = `${API_BASE}/api/audio/confirmations/${langRef.current}/got-it.mp3`;
+        audioBlob = await voiceApi.getPregeneratedAudio(
+          'confirmations',
+          langRef.current,
+          'got-it.mp3',
+        );
       } else {
-        const blob = await voiceApi.speak("Got it!", langRef.current);
-        url = URL.createObjectURL(blob);
+        audioBlob = await voiceApi.speak("Got it!", langRef.current);
       }
 
-      // Fetch audio as blob
-      const response = await fetch(url);
-      if (!response.ok) return;
-      const audioBlob = await response.blob();
       const blobUrl = URL.createObjectURL(audioBlob);
 
       const audio = new Audio(blobUrl);
