@@ -1,6 +1,6 @@
 /**
  * RPPGDetector - Blood Pressure Detection via Remote Photoplethysmography
- * 
+ *
  * Uses the phone's rear camera + flash LED to detect pulse from fingertip.
  * The flash shines light into the finger, and the camera captures tiny
  * fluctuations in reflected red light caused by blood flow.
@@ -26,11 +26,11 @@ export class RPPGDetector {
   constructor(
     video: HTMLVideoElement,
     canvas: HTMLCanvasElement,
-    onSignalUpdate?: (strength: number) => void
+    onSignalUpdate?: (strength: number) => void,
   ) {
     this.video = video;
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    this.ctx = canvas.getContext("2d");
     this.onSignalUpdate = onSignalUpdate;
   }
 
@@ -43,36 +43,36 @@ export class RPPGDetector {
     try {
       // Request rear camera with low resolution (faster processing)
       this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment', 
-          width: { ideal: 320 }, 
-          height: { ideal: 240 } 
+        video: {
+          facingMode: "environment",
+          width: { ideal: 320 },
+          height: { ideal: 240 },
         },
         audio: false,
       });
 
       const track = this.stream.getVideoTracks()[0];
-      
+
       // Try to enable torch (flash LED) for better signal
       try {
-        await (track as any).applyConstraints({ 
-          advanced: [{ torch: true }] 
+        await (track as any).applyConstraints({
+          advanced: [{ torch: true }],
         });
       } catch {
         // Torch unavailable — still works but weaker signal
-        console.warn('Torch not available on this device');
+        console.warn("Torch not available on this device");
       }
 
       this.video.srcObject = this.stream;
       await this.video.play();
-      
+
       this.redSamples = [];
       this.timestamps = [];
       this.running = true;
       this.loop();
     } catch (error) {
-      console.error('Failed to start camera:', error);
-      throw new Error('Camera access denied or unavailable');
+      console.error("Failed to start camera:", error);
+      throw new Error("Camera access denied or unavailable");
     }
   }
 
@@ -81,17 +81,17 @@ export class RPPGDetector {
    */
   stop(): void {
     this.running = false;
-    
+
     if (this.raf) {
       cancelAnimationFrame(this.raf);
       this.raf = null;
     }
-    
+
     if (this.stream) {
-      this.stream.getTracks().forEach(t => t.stop());
+      this.stream.getTracks().forEach((t) => t.stop());
       this.stream = null;
     }
-    
+
     this.video.srcObject = null;
   }
 
@@ -108,11 +108,12 @@ export class RPPGDetector {
    */
   getSignalStrength(): number {
     if (this.redSamples.length < 60) return 0;
-    
+
     const recent = this.redSamples.slice(-60);
     const mean = recent.reduce((a, b) => a + b, 0) / recent.length;
-    const variance = recent.reduce((s, v) => s + (v - mean) ** 2, 0) / recent.length;
-    
+    const variance =
+      recent.reduce((s, v) => s + (v - mean) ** 2, 0) / recent.length;
+
     // Normalize variance to 0-1 range
     return Math.min(1, Math.sqrt(variance) / 12);
   }
@@ -137,7 +138,7 @@ export class RPPGDetector {
    */
   getResult(): RPPGResult | null {
     if (this.redSamples.length < 150) return null;
-    
+
     const peaks = this.findPeaks(this.redSamples);
     if (peaks.length < 4) return null;
 
@@ -159,8 +160,11 @@ export class RPPGDetector {
     const hrv = Math.round(Math.sqrt(sumSqDiff / (intervals.length - 1)));
 
     // Calculate confidence based on signal variance
-    const mean = this.redSamples.reduce((a, b) => a + b, 0) / this.redSamples.length;
-    const variance = this.redSamples.reduce((s, v) => s + (v - mean) ** 2, 0) / this.redSamples.length;
+    const mean =
+      this.redSamples.reduce((a, b) => a + b, 0) / this.redSamples.length;
+    const variance =
+      this.redSamples.reduce((s, v) => s + (v - mean) ** 2, 0) /
+      this.redSamples.length;
     const confidence = Math.min(1, Math.sqrt(variance) / 15);
 
     // Sanity checks — reject impossible values
@@ -177,7 +181,7 @@ export class RPPGDetector {
     if (!this.running || !this.ctx) return;
 
     const { videoWidth, videoHeight } = this.video;
-    
+
     // Wait for video to be ready
     if (videoWidth === 0) {
       this.raf = requestAnimationFrame(this.loop);
@@ -187,7 +191,7 @@ export class RPPGDetector {
     // Set canvas size to match video
     this.canvas.width = videoWidth;
     this.canvas.height = videoHeight;
-    
+
     // Draw current frame to canvas
     this.ctx.drawImage(this.video, 0, 0);
 
@@ -195,12 +199,12 @@ export class RPPGDetector {
     const cx = Math.floor(videoWidth / 2);
     const cy = Math.floor(videoHeight / 2);
     const size = Math.min(videoWidth, videoHeight, 80); // 80×80 center patch
-    
+
     const data = this.ctx.getImageData(
-      cx - size / 2, 
-      cy - size / 2, 
-      size, 
-      size
+      cx - size / 2,
+      cy - size / 2,
+      size,
+      size,
     ).data;
 
     // Calculate average red channel value
@@ -235,8 +239,13 @@ export class RPPGDetector {
     // Smooth signal with moving average (window = 5)
     const smoothed: number[] = [];
     for (let i = 0; i < signal.length; i++) {
-      let sum = 0, count = 0;
-      for (let j = Math.max(0, i - 5); j <= Math.min(signal.length - 1, i + 5); j++) {
+      let sum = 0,
+        count = 0;
+      for (
+        let j = Math.max(0, i - 5);
+        j <= Math.min(signal.length - 1, i + 5);
+        j++
+      ) {
         sum += signal[j];
         count++;
       }
