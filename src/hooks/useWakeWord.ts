@@ -169,9 +169,11 @@ export function useWakeWord({
 
     if (recognitionRef.current) {
       try {
+        // Properly stop and abort to release microphone
+        recognitionRef.current.stop();
         recognitionRef.current.abort();
       } catch {
-        // Ignore
+        // Ignore abort errors
       }
       recognitionRef.current = null;
     }

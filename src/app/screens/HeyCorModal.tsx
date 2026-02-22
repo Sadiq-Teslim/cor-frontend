@@ -74,6 +74,19 @@ export default function HeyCorModal({
       .catch(console.error);
   }, [userId]);
 
+  // Stop recording and clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (isRecording) {
+        stopRecording();
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, [isRecording, stopRecording]);
+
   const askCor = async () => {
     const question = corInput.trim();
     if (!question) return;
@@ -134,9 +147,13 @@ export default function HeyCorModal({
   };
 
   const handleClose = () => {
-    stopRecording();
+    // Stop recording and audio playback before closing
+    if (isRecording) {
+      stopRecording();
+    }
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
     onClose();
   };

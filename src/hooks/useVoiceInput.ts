@@ -31,6 +31,9 @@ export function useVoiceInput({
 
   // Use Web Speech API for real-time transcription
   const startRecording = useCallback(async () => {
+    // Add a small delay to ensure wake word has fully stopped and released microphone
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
@@ -99,71 +102,101 @@ export function useVoiceInput({
       }
     } else {
       // Fallback to MediaRecorder + server-side transcription
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "audio/webm",
-        });
-        mediaRecorderRef.current = mediaRecorder;
-        audioChunksRef.current = [];
+      let retries = 0;
+      const maxRetries = 3;
 
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            audioChunksRef.current.push(e.data);
-          }
-        };
-
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunksRef.current, {
-            type: "audio/webm",
+      const attemptGetMedia = async (): Promise<void> => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
           });
-          const audioFile = new File([audioBlob], "voice.webm", {
-            type: "audio/webm",
+          const mediaRecorder = new MediaRecorder(stream, {
+            mimeType: "audio/webm",
           });
+          mediaRecorderRef.current = mediaRecorder;
+          audioChunksRef.current = [];
 
-          try {
-            setInterimTranscript("Transcribing...");
-            const result = await voiceApi.transcribe(audioFile);
-            setTranscript(result.text);
-            setInterimTranscript("");
-            onTranscript?.(result.text);
-          } catch (err) {
-            console.error("[VoiceInput] Transcription error:", err);
-            onError?.("Failed to transcribe audio");
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+              audioChunksRef.current.push(e.data);
+            }
+          };
+
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunksRef.current, {
+              type: "audio/webm",
+            });
+            const audioFile = new File([audioBlob], "voice.webm", {
+              type: "audio/webm",
+            });
+
+            try {
+              setInterimTranscript("Transcribing...");
+              const result = await voiceApi.transcribe(audioFile);
+              setTranscript(result.text);
+              setInterimTranscript("");
+              onTranscript?.(result.text);
+            } catch (err) {
+              console.error("[VoiceInput] Transcription error:", err);
+              onError?.("Failed to transcribe audio");
+            }
+
+            // Stop all tracks
+            stream.getTracks().forEach((track) => track.stop());
+          };
+
+          mediaRecorder.start();
+          setIsRecording(true);
+          setTranscript("");
+          setInterimTranscript("");
+
+          // Auto-stop after 30 seconds
+          setTimeout(() => {
+            if (mediaRecorderRef.current?.state === "recording") {
+              stopRecording();
+            }
+          }, 30000);
+        } catch (err: any) {
+          console.error("[VoiceInput] Media error:", err);
+          
+          // Retry on NotAllowedError or NotFoundError (microphone in use)
+          if (
+            (err.name === "NotAllowedError" || err.name === "NotFoundError" || err.message?.includes("Permission denied")) &&
+            retries < maxRetries
+          ) {
+            retries++;
+            console.log(`[VoiceInput] Retrying getUserMedia (${retries}/${maxRetries})...`);
+            // Wait before retrying to let other processes release the microphone
+            await new Promise(resolve => setTimeout(resolve, 300 * retries));
+            await attemptGetMedia();
+          } else {
+            onError?.("Microphone access denied");
+            setIsRecording(false);
           }
+        }
+      };
 
-          // Stop all tracks
-          stream.getTracks().forEach((track) => track.stop());
-        };
-
-        mediaRecorder.start();
-        setIsRecording(true);
-        setTranscript("");
-        setInterimTranscript("");
-
-        // Auto-stop after 30 seconds
-        setTimeout(() => {
-          if (mediaRecorderRef.current?.state === "recording") {
-            stopRecording();
-          }
-        }, 30000);
-      } catch (err) {
-        console.error("[VoiceInput] Media error:", err);
-        onError?.("Microphone access denied");
-      }
+      await attemptGetMedia();
     }
   }, [language, onTranscript, onError]);
 
   const stopRecording = useCallback(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+        recognitionRef.current.abort();
+      } catch {
+        // Ignore error
+      }
       recognitionRef.current = null;
     }
 
     if (mediaRecorderRef.current?.state === "recording") {
-      mediaRecorderRef.current.stop();
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {
+        // Ignore error
+      }
       mediaRecorderRef.current = null;
     }
 
