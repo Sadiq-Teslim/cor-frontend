@@ -40,7 +40,9 @@ export default function App() {
     smokeDrink: "",
     activity: "",
     sleep: "",
+    medicalFile: "",
   });
+  const [pendingMedicalFile, setPendingMedicalFile] = useState<File | null>(null);
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [fileUploaded, setFileUploaded] = useState(false);
   const [connectedDevices, setConnectedDevices] = useState<string[]>([]);
@@ -161,7 +163,19 @@ export default function App() {
       });
       setUser(response.user);
       setUserId(response.user.id);
-      showScreen("screen-4");
+
+      // Upload medical file if one was selected during onboarding
+      if (pendingMedicalFile) {
+        try {
+          await medicalApi.uploadRecord(pendingMedicalFile, response.user.id);
+          setFileUploaded(true);
+        } catch {
+          console.error("Medical file upload failed, continuing onboarding");
+        }
+        setPendingMedicalFile(null);
+      }
+
+      showScreen("screen-5");
     } catch (err) {
       console.error("Onboarding failed:", err);
       alert("Failed to save your profile. Please try again.");
@@ -260,6 +274,7 @@ export default function App() {
             onUpdateData={setOnboardingData}
             onNextStep={() => setOnboardingStep((s) => s + 1)}
             onComplete={completeOnboarding}
+            onFileSelected={setPendingMedicalFile}
           />
         );
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Volume2, Loader2 } from "lucide-react";
+import { Mic, Volume2, Loader2, FileText, Upload } from "lucide-react";
 import { LANGUAGE_MAP } from "../../api/types";
 import { useVoiceOnboarding } from "../../hooks/useVoiceOnboarding";
 import type { VoiceState } from "../../hooks/useVoiceOnboarding";
@@ -13,6 +13,7 @@ export interface OnboardingFormData {
   smokeDrink: string;
   activity: string;
   sleep: string;
+  medicalFile: string;
 }
 
 interface Props {
@@ -23,6 +24,7 @@ interface Props {
   onUpdateData: (data: OnboardingFormData) => void;
   onNextStep: () => void;
   onComplete: () => void;
+  onFileSelected?: (file: File) => void;
 }
 
 // Parse voice transcript into a form field + value
@@ -97,10 +99,20 @@ function parseVoice(
       const m = t.match(/\d+/);
       return m ? { field: "sleep", value: m[0] } : null;
     }
+    case 9: {
+      // Voice can skip this step — file upload is manual
+      if (/\b(no|nah|nope|skip|don't have|i don't|nothing)\b/i.test(t))
+        return { field: "medicalFile", value: "skip" };
+      if (/\b(yes|yeah|yep|i have|i do)\b/i.test(t))
+        return { field: "medicalFile", value: "yes" };
+      return null;
+    }
     default:
       return null;
   }
 }
+
+const TOTAL_STEPS = 9;
 
 export default function OnboardingScreen({
   data,
@@ -110,11 +122,13 @@ export default function OnboardingScreen({
   onUpdateData,
   onNextStep,
   onComplete,
+  onFileSelected,
 }: Props) {
   const langCode = LANGUAGE_MAP[language] || "en";
   const micInited = useRef(false);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [voiceTranscript, setVoiceTranscript] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
 
   // Keep a ref to the latest data to avoid stale closures in voice callbacks
   const dataRef = useRef(data);
@@ -131,7 +145,7 @@ export default function OnboardingScreen({
       onUpdateData({ ...dataRef.current, [parsed.field]: parsed.value });
       playConfirmation();
       autoTimer.current = setTimeout(() => {
-        if (step === 8) onComplete();
+        if (step === TOTAL_STEPS) onComplete();
         else onNextStep();
       }, 1200);
     }
@@ -190,8 +204,23 @@ export default function OnboardingScreen({
       autoTimer.current = null;
     }
     stopAll();
-    if (step === 8) onComplete();
+    if (step === TOTAL_STEPS) onComplete();
     else onNextStep();
+  };
+
+  const handleFileUpload = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".pdf,image/*";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) {
+        setUploadedFileName(file.name);
+        onUpdateData({ ...dataRef.current, medicalFile: file.name });
+        onFileSelected?.(file);
+      }
+    };
+    input.click();
   };
 
   const renderChips = (options: string[], field: keyof OnboardingFormData) => (
@@ -267,11 +296,11 @@ export default function OnboardingScreen({
       <div className="h-1" style={{ background: "#1E2D45" }}>
         <div
           className="h-full transition-all duration-300"
-          style={{ width: `${(step / 8) * 100}%`, background: "#00E5CC" }}
+          style={{ width: `${(step / TOTAL_STEPS) * 100}%`, background: "#00E5CC" }}
         />
       </div>
       <div className="px-8 py-4 text-sm" style={{ color: "#8896A8" }}>
-        Step {step} of 8
+        Step {step} of {TOTAL_STEPS}
       </div>
 
       <div className="px-8 pb-8">
@@ -312,6 +341,11 @@ export default function OnboardingScreen({
               How many hours do you sleep on average?
             </h2>
           )}
+          {step === 9 && (
+            <h2 className="text-xl font-semibold mb-2">
+              Do you have any medical records to share?
+            </h2>
+          )}
 
           {/* Voice indicator */}
           <div className="flex flex-col items-center my-5">
@@ -344,14 +378,16 @@ export default function OnboardingScreen({
             )}
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px" style={{ background: "#1E2D45" }} />
-            <div className="text-xs" style={{ color: "#8896A8" }}>
-              or type below
+          {/* Divider — hide for file upload step */}
+          {step !== 9 && (
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px" style={{ background: "#1E2D45" }} />
+              <div className="text-xs" style={{ color: "#8896A8" }}>
+                or type below
+              </div>
+              <div className="flex-1 h-px" style={{ background: "#1E2D45" }} />
             </div>
-            <div className="flex-1 h-px" style={{ background: "#1E2D45" }} />
-          </div>
+          )}
 
           {/* Manual inputs */}
           {step === 1 && (
@@ -411,6 +447,55 @@ export default function OnboardingScreen({
               }}
             />
           )}
+          {step === 9 && (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm mb-1" style={{ color: "#8896A8" }}>
+                Upload a medical file (PDF or image) so Cor can better understand your health history. This is optional.
+              </p>
+              <div
+                onClick={handleFileUpload}
+                className="p-5 rounded-xl text-center cursor-pointer transition-colors"
+                style={{
+                  background: uploadedFileName ? "rgba(0,229,204,0.08)" : "#0A0F1E",
+                  border: `1px solid ${uploadedFileName ? "#00E5CC" : "#1E2D45"}`,
+                }}
+              >
+                <div className="mb-2 flex justify-center">
+                  {uploadedFileName ? (
+                    <FileText size={32} style={{ color: "#00E5CC" }} />
+                  ) : (
+                    <Upload size={32} style={{ color: "#8896A8" }} />
+                  )}
+                </div>
+                {uploadedFileName ? (
+                  <>
+                    <div className="text-sm font-semibold" style={{ color: "#00E5CC" }}>
+                      {uploadedFileName}
+                    </div>
+                    <div className="text-xs mt-1" style={{ color: "#8896A8" }}>
+                      Tap to change file
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-semibold text-base">Tap to upload</div>
+                    <div className="text-xs mt-1" style={{ color: "#8896A8" }}>
+                      PDF or image
+                    </div>
+                  </>
+                )}
+              </div>
+              {!uploadedFileName && (
+                <button
+                  onClick={handleNext}
+                  className="text-sm py-2 cursor-pointer"
+                  style={{ color: "#8896A8", background: "none", border: "none" }}
+                >
+                  Skip for now
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <button
@@ -422,7 +507,13 @@ export default function OnboardingScreen({
             color: "#0A0F1E",
           }}
         >
-          {isSubmitting ? "Saving..." : "Next"}
+          {isSubmitting
+            ? "Saving..."
+            : step === 9
+              ? uploadedFileName
+                ? "Continue"
+                : "Skip"
+              : "Next"}
         </button>
       </div>
     </div>

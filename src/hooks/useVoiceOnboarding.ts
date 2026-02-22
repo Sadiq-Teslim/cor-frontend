@@ -12,6 +12,7 @@ const Q_FILES = [
   "question-6-smoke-drink.mp3",
   "question-7-activity.mp3",
   "question-8-sleep.mp3",
+  "question-9-medical-records.mp3",
 ];
 
 const Q_TEXTS = [
@@ -23,6 +24,7 @@ const Q_TEXTS = [
   "Do you smoke or drink alcohol?",
   "How active are you?",
   "How many hours do you sleep on average?",
+  "Do you have any medical records to share? You can upload a file, or just say skip.",
 ];
 
 export type VoiceState =
