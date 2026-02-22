@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '../context/UserContext';
 import { userApi, medicalApi } from '../api';
 import { LANGUAGE_MAP } from '../api/types';

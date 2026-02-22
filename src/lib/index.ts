@@ -1,2 +1,7 @@
 // Lib exports
-export { RPPGDetector, type RPPGResult } from "./rppg";
+export {
+  RPPGDetector,
+  type RPPGResult,
+  type SignalQuality,
+  type EarlyCompletionStatus,
+} from "./rppg";
