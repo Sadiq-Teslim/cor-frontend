@@ -155,10 +155,10 @@ export default function OnboardingScreen({
       if (!micInited.current) {
         micInited.current = true;
         const success = await initMic();
-        console.log('[Onboarding] Mic init:', success);
+        console.log("[Onboarding] Mic init:", success);
       }
       if (!cancelled) {
-        console.log('[Onboarding] Playing question for step:', step);
+        console.log("[Onboarding] Playing question for step:", step);
         playQuestion(step);
       }
     })();

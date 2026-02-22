@@ -179,34 +179,41 @@ export function useVoiceOnboarding(
       an.fftSize = 512;
       src.connect(an);
       analyserRef.current = an;
-      
+
       // Resume audio context to enable playback (user interaction happened via mic permission)
-      if (ctx.state === 'suspended') {
+      if (ctx.state === "suspended") {
         await ctx.resume();
       }
-      
+
       // Unlock audio playback by playing a silent sound (helps with autoplay policies)
       try {
-        const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+        const silentAudio = new Audio(
+          "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA",
+        );
         await silentAudio.play();
-        console.log('[Voice] Audio unlocked via silent play');
+        console.log("[Voice] Audio unlocked via silent play");
       } catch (e) {
-        console.log('[Voice] Silent audio unlock not needed or failed:', e);
+        console.log("[Voice] Silent audio unlock not needed or failed:", e);
       }
-      
+
       setVoiceReady(true);
-      console.log('[Voice] Mic initialized successfully');
+      console.log("[Voice] Mic initialized successfully");
       return true;
     } catch (e) {
-      console.error('[Voice] Mic init failed:', e);
+      console.error("[Voice] Mic init failed:", e);
       setVoiceReady(false);
       return false;
     }
   }, []);
 
   const playQuestion = useCallback(async (step: number) => {
-    console.log('[Voice] playQuestion called for step:', step, 'lang:', langRef.current);
-    
+    console.log(
+      "[Voice] playQuestion called for step:",
+      step,
+      "lang:",
+      langRef.current,
+    );
+
     // Reset
     haltAudio();
     if (recRef.current) endCapture();
@@ -227,11 +234,11 @@ export function useVoiceOnboarding(
       if (PREGEN_LANGS.includes(langRef.current)) {
         url = `${API_BASE}/api/audio/onboarding/${langRef.current}/${Q_FILES[step - 1]}`;
       } else {
-        console.log('[Voice] Fetching TTS for:', Q_TEXTS[step - 1]);
+        console.log("[Voice] Fetching TTS for:", Q_TEXTS[step - 1]);
         const blob = await voiceApi.speak(Q_TEXTS[step - 1], langRef.current);
         url = URL.createObjectURL(blob);
       }
-      console.log('[Voice] Audio URL:', url);
+      console.log("[Voice] Audio URL:", url);
 
       // Fetch audio as blob to ensure network request happens and we have the data
       const response = await fetch(url);
@@ -240,13 +247,13 @@ export function useVoiceOnboarding(
       }
       const audioBlob = await response.blob();
       const blobUrl = URL.createObjectURL(audioBlob);
-      console.log('[Voice] Audio fetched, size:', audioBlob.size);
+      console.log("[Voice] Audio fetched, size:", audioBlob.size);
 
       const el = new Audio(blobUrl);
       audioEl.current = el;
 
       el.onended = () => {
-        console.log('[Voice] Audio playback ended');
+        console.log("[Voice] Audio playback ended");
         URL.revokeObjectURL(blobUrl);
         audioEl.current = null;
         if (!recRef.current) setVoiceState("listening");
@@ -258,9 +265,9 @@ export function useVoiceOnboarding(
         if (!recRef.current) setVoiceState("listening");
       };
 
-      console.log('[Voice] Attempting to play audio...');
+      console.log("[Voice] Attempting to play audio...");
       await el.play();
-      console.log('[Voice] Audio playing successfully');
+      console.log("[Voice] Audio playing successfully");
       // Start VAD monitoring for barge-in
       if (streamRef.current) monitor();
     } catch (e) {
@@ -284,13 +291,13 @@ export function useVoiceOnboarding(
         const blob = await voiceApi.speak("Got it!", langRef.current);
         url = URL.createObjectURL(blob);
       }
-      
+
       // Fetch audio as blob
       const response = await fetch(url);
       if (!response.ok) return;
       const audioBlob = await response.blob();
       const blobUrl = URL.createObjectURL(audioBlob);
-      
+
       const audio = new Audio(blobUrl);
       audio.onended = () => URL.revokeObjectURL(blobUrl);
       await audio.play();
