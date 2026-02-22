@@ -74,6 +74,16 @@ export default function HeyCorModal({
       .catch(console.error);
   }, [userId]);
 
+  // Preload speechSynthesis voices (they load async on some browsers)
+  useEffect(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+  }, []);
+
   // Stop recording and clean up on unmount
   useEffect(() => {
     return () => {
@@ -83,6 +93,9 @@ export default function HeyCorModal({
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
+      }
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
       }
     };
   }, [isRecording, stopRecording]);
@@ -118,26 +131,78 @@ export default function HeyCorModal({
     }
   };
 
-  const speakResponse = async (text: string) => {
-    try {
-      setIsSpeaking(true);
-      const audioBlob = await voiceApi.speak(text, langCode);
-      const audioUrl = URL.createObjectURL(audioBlob);
+  // Language map for browser speechSynthesis
+  const SYNTH_LANG_MAP: Record<string, string> = {
+    en: "en-US", yo: "yo-NG", ha: "ha-NG", ig: "ig-NG", pcm: "en-NG", fr: "fr-FR",
+  };
 
-      if (audioRef.current) {
-        audioRef.current.src = audioUrl;
-        audioRef.current.onended = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-        audioRef.current.onerror = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-        await audioRef.current.play();
+  // African languages that benefit from YarnGPT's Nigerian voices
+  const AFRICAN_LANGS = new Set(["yo", "ha", "ig", "pcm"]);
+
+  const speakResponse = async (text: string) => {
+    setIsSpeaking(true);
+
+    // For African languages, try YarnGPT API (better voices) with a 5s timeout
+    // For English/French, use instant browser speechSynthesis
+    if (AFRICAN_LANGS.has(langCode)) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        const audioBlob = await Promise.race([
+          voiceApi.speak(text, langCode),
+          new Promise<never>((_, reject) => {
+            controller.signal.addEventListener("abort", () =>
+              reject(new Error("TTS timeout"))
+            );
+          }),
+        ]);
+        clearTimeout(timeout);
+
+        const audioUrl = URL.createObjectURL(audioBlob);
+        if (audioRef.current) {
+          audioRef.current.src = audioUrl;
+          audioRef.current.onended = () => {
+            setIsSpeaking(false);
+            URL.revokeObjectURL(audioUrl);
+          };
+          audioRef.current.onerror = () => {
+            setIsSpeaking(false);
+            URL.revokeObjectURL(audioUrl);
+          };
+          await audioRef.current.play();
+          return;
+        }
+      } catch (err) {
+        console.warn("[HeyCor] YarnGPT TTS failed/slow, falling back to browser:", err);
+        // Fall through to browser speechSynthesis
       }
-    } catch (err) {
-      console.error("[HeyCor] TTS error:", err);
+    }
+
+    // Browser speechSynthesis — instant, no network call
+    if ("speechSynthesis" in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = SYNTH_LANG_MAP[langCode] || "en-US";
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      // Try to pick a good voice
+      const voices = window.speechSynthesis.getVoices();
+      const targetLang = utterance.lang.split("-")[0];
+      const match = voices.find(
+        (v) => v.lang.startsWith(targetLang) && v.localService
+      ) || voices.find((v) => v.lang.startsWith(targetLang));
+      if (match) utterance.voice = match;
+
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+
+      window.speechSynthesis.speak(utterance);
+    } else {
+      // No TTS available at all
       setIsSpeaking(false);
     }
   };
@@ -159,6 +224,10 @@ export default function HeyCorModal({
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
     onClose();
   };
 
