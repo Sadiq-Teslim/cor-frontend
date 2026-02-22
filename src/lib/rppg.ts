@@ -196,22 +196,32 @@ export class RPPGDetector {
     }
 
     const recent = this.redSamples.slice(-60);
+    const recentGreen = this.greenSamples.slice(-60);
     const mean = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const meanGreen = recentGreen.reduce((a, b) => a + b, 0) / recentGreen.length;
 
-    // Brightness check: finger covering camera with flash = high red values (180-255)
-    // No finger or partial coverage = lower values
-    const brightness = Math.min(1, Math.max(0, (mean - 120) / 100));
-    const isFingerDetected = mean > 150 && mean < 255;
+    // Brightness: normalize to 0-1 range
+    // Works with or without torch - just needs to be in reasonable range (40-200)
+    const brightness = Math.min(1, Math.max(0, (mean - 50) / 120));
+    
+    // Finger detection: 
+    // - With torch: would be bright (>150) and reddish
+    // - Without torch: medium darkness (60-140) and red > green
+    // Works for both cases
+    const isFingerDetected = 
+      mean > 60 && // Not too dark (not pointing at nothing)
+      mean < 180 && // Not too bright (not pointing at light)
+      mean > meanGreen - 5; // Red channel >= green (tissue is reddish/pinkish)
 
     // Pulsatile quality: variance in the signal indicates pulse waves
     const variance =
       recent.reduce((s, v) => s + (v - mean) ** 2, 0) / recent.length;
     const stdDev = Math.sqrt(variance);
 
-    // Good pulse signal has stdDev between 1-15 (too high = noise, too low = no pulse)
+    // Good pulse signal has stdDev between 0.5-20 (too high = noise, too low = no pulse)
     let pulsatile = 0;
     if (stdDev >= 0.5 && stdDev <= 20) {
-      pulsatile = Math.min(1, stdDev / 8);
+      pulsatile = Math.min(1, stdDev / 10);
     }
 
     // Stability: check for sudden movements (large frame-to-frame changes)
@@ -220,7 +230,7 @@ export class RPPGDetector {
       const recentMotion = this.motionBuffer.slice(-10);
       const avgMotion =
         recentMotion.reduce((a, b) => a + b, 0) / recentMotion.length;
-      stability = Math.max(0, 1 - avgMotion / 10);
+      stability = Math.max(0, 1 - avgMotion / 15);
     }
 
     // Overall strength combines all factors
@@ -510,7 +520,18 @@ export class RPPGDetector {
 
     // Notify signal quality update
     if (this.onSignalUpdate) {
-      this.onSignalUpdate(this.getSignalQuality());
+      const quality = this.getSignalQuality();
+      
+      // Log quality metrics every 60 frames (~2 seconds at 30fps)
+      if (this.redSamples.length % 60 === 0) {
+        console.log(`[RPPG] Sample ${this.redSamples.length}: ` +
+          `red=${avgRed.toFixed(1)}, green=${avgGreen.toFixed(1)}, ` +
+          `finger=${quality.isFingerDetected ? '✓' : '✗'}, ` +
+          `strength=${quality.strength.toFixed(2)}, ` +
+          `pulsatile=${quality.pulsatile.toFixed(2)}`);
+      }
+      
+      this.onSignalUpdate(quality);
     }
 
     // Check for early completion every ~1 second (30 frames)
