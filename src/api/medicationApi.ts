@@ -1,6 +1,6 @@
 // Medications API Service
-import apiClient from './client';
-import type { Medication, MedicationLog } from './types';
+import apiClient from "./client";
+import type { Medication, MedicationLog } from "./types";
 
 export const medicationApi = {
   // Get all medications for user
@@ -16,13 +16,15 @@ export const medicationApi = {
     dailyReminder?: boolean;
     reminderTime?: string;
   }): Promise<{ medication: Medication; message: string }> {
-    return apiClient.post('/api/medications', data);
+    return apiClient.post("/api/medications", data);
   },
 
   // Update medication
   async updateMedication(
     medicationId: string,
-    data: Partial<Pick<Medication, 'name' | 'affectsBP' | 'dailyReminder' | 'reminderTime'>>
+    data: Partial<
+      Pick<Medication, "name" | "affectsBP" | "dailyReminder" | "reminderTime">
+    >,
   ): Promise<{ medication: Medication }> {
     return apiClient.put(`/api/medications/${medicationId}`, data);
   },
@@ -33,14 +35,20 @@ export const medicationApi = {
   },
 
   // Log medication taken
-  async logMedicationTaken(medicationId: string, userId: string): Promise<{ log: MedicationLog }> {
+  async logMedicationTaken(
+    medicationId: string,
+    userId: string,
+  ): Promise<{ log: MedicationLog }> {
     return apiClient.post(`/api/medications/${medicationId}/log`, { userId });
   },
 
   // Get medication logs
-  async getMedicationLogs(userId: string, days?: number): Promise<{ logs: MedicationLog[] }> {
+  async getMedicationLogs(
+    userId: string,
+    days?: number,
+  ): Promise<{ logs: MedicationLog[] }> {
     const params = new URLSearchParams({ userId });
-    if (days) params.append('days', days.toString());
+    if (days) params.append("days", days.toString());
     return apiClient.get(`/api/medications/logs?${params}`);
   },
 };
