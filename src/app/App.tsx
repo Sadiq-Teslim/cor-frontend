@@ -49,7 +49,7 @@ export default function App() {
   const [alertData, setAlertData] = useState<AlertData | null>(null);
   const [activeNav, setActiveNav] = useState("home");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [wakeWordEnabled, setWakeWordEnabled] = useState(true);
+  const [wakeWordEnabled, setWakeWordEnabled] = useState(false);
   const [isWakeWordListening, setIsWakeWordListening] = useState(false);
 
   // Refs to track latest values for callbacks (avoid stale closures)
@@ -341,38 +341,44 @@ export default function App() {
           />
         )}
 
-        {/* Hey Cor Button with Wake Word Indicator */}
+        {/* Hey Cor Button with Wake Word Toggle */}
         {isPostOnboarding && (
           <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
-            {/* Wake word status */}
-            {wakeSupported && wakeWordEnabled && (
-              <div
-                className="mb-2 px-3 py-1 rounded-full text-xs flex items-center gap-1"
+            {/* Wake word toggle — tap to enable/disable mic listening */}
+            {wakeSupported && (
+              <button
+                onClick={() => setWakeWordEnabled((prev) => !prev)}
+                className="mb-2 px-3 py-1 rounded-full text-xs flex items-center gap-1 cursor-pointer"
                 style={{
-                  background: isWakeWordListening
+                  background: wakeWordEnabled && isWakeWordListening
                     ? "rgba(0, 229, 204, 0.2)"
                     : "rgba(136, 150, 168, 0.2)",
-                  color: isWakeWordListening ? "#00E5CC" : "#8896A8",
+                  color: wakeWordEnabled && isWakeWordListening ? "#00E5CC" : "#8896A8",
+                  border: "none",
                 }}
               >
-                {isWakeWordListening ? <Mic size={12} /> : <MicOff size={12} />}
-                {isWakeWordListening ? 'Say "Hey Cor"' : "Wake word off"}
-              </div>
+                {wakeWordEnabled ? <Mic size={12} /> : <MicOff size={12} />}
+                {wakeWordEnabled && isWakeWordListening
+                  ? 'Say "Hey Cor"'
+                  : wakeWordEnabled
+                    ? "Starting mic..."
+                    : "Mic off — tap to enable"}
+              </button>
             )}
             <button
               onClick={() => setShowHeyCor(true)}
               className="w-14 h-14 rounded-full flex items-center justify-center relative"
               style={{
-                background: isWakeWordListening ? "#00E5CC" : "#00E5CC",
+                background: "#00E5CC",
                 color: "#0A0F1E",
-                animation: isWakeWordListening
+                animation: wakeWordEnabled && isWakeWordListening
                   ? "pulse 1s ease-in-out infinite"
                   : "pulse 2s ease-in-out infinite",
               }}
             >
               <Mic size={24} />
               {/* Listening indicator ring */}
-              {isWakeWordListening && (
+              {wakeWordEnabled && isWakeWordListening && (
                 <div
                   className="absolute inset-0 rounded-full"
                   style={{

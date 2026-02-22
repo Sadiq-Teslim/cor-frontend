@@ -33,10 +33,12 @@ export default function FoodLoggerScreen({ userId, selectedLanguage, onBack }: P
         setMealAnalyzed(true);
       } catch (err) {
         console.error('Food analysis failed:', err);
-        alert('Could not analyze the meal. Please try again.');
-      } finally {
         setMealAnalyzing(false);
+        setMealAnalyzed(false);
+        alert('Could not analyze the meal. Please try again.');
+        return;
       }
+      setMealAnalyzing(false);
     };
     input.click();
   };
@@ -58,11 +60,11 @@ export default function FoodLoggerScreen({ userId, selectedLanguage, onBack }: P
         setFoodResult({ foodName: mealDescription, bpImpact: 'moderate', message: response.text });
         setMealAnalyzed(true);
       } catch {
+        setMealAnalyzed(false);
         alert('Could not analyze the meal. Please try again.');
       }
-    } finally {
-      setMealAnalyzing(false);
     }
+    setMealAnalyzing(false);
   };
 
   const impactColor = (impact: string) =>

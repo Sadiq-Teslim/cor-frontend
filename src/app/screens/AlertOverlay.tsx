@@ -1,12 +1,45 @@
+import { useState, useEffect, useRef } from 'react';
 import type { AlertData } from '../../api/types';
-import { Heart } from 'lucide-react';
+import { Heart, Clock } from 'lucide-react';
 
 interface Props {
   alertData: AlertData | null;
   onDismiss: () => void;
 }
 
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+
 export default function AlertOverlay({ alertData, onDismiss }: Props) {
+  const [reminderSet, setReminderSet] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const setReminder = async () => {
+    // Request notification permission if available
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+
+    // Schedule a real reminder via setTimeout + Notification
+    timerRef.current = setTimeout(() => {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Cor Health Reminder', {
+          body: 'Time to check your blood pressure. Open Cor to take a reading.',
+          icon: '/favicon.ico',
+        });
+      }
+    }, TWO_HOURS_MS);
+
+    setReminderSet(true);
+    onDismiss();
+  };
+
   return (
     <div className="fixed inset-0 overflow-y-auto px-8 py-8 z-50" style={{ background: 'rgba(6, 9, 18, 0.95)' }}>
       <div className="max-w-md mx-auto">
@@ -56,11 +89,17 @@ export default function AlertOverlay({ alertData, onDismiss }: Props) {
         </button>
 
         <button
-          onClick={() => { onDismiss(); alert('Reminder set for 2 hours from now.'); }}
-          className="w-full mt-3 font-semibold text-base px-4 py-4 rounded-xl"
-          style={{ background: 'transparent', border: '1px solid #1E2D45', color: '#F0F4FF' }}
+          onClick={setReminder}
+          disabled={reminderSet}
+          className="w-full mt-3 font-semibold text-base px-4 py-4 rounded-xl flex items-center justify-center gap-2"
+          style={{
+            background: 'transparent',
+            border: `1px solid ${reminderSet ? '#00E5CC' : '#1E2D45'}`,
+            color: reminderSet ? '#00E5CC' : '#F0F4FF',
+          }}
         >
-          Remind me in 2 hours
+          <Clock size={16} />
+          {reminderSet ? 'Reminder set!' : 'Remind me in 2 hours'}
         </button>
 
         <div onClick={onDismiss} className="text-center text-xs underline cursor-pointer mt-4" style={{ color: '#8896A8' }}>

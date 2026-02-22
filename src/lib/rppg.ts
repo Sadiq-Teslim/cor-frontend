@@ -185,18 +185,25 @@ export class RPPGDetector {
    * Get comprehensive signal quality metrics
    */
   getSignalQuality(): SignalQuality {
-    if (this.redSamples.length < 60) {
-      return {
-        strength: 0,
-        brightness: 0,
-        pulsatile: 0,
-        stability: 1,
-        isFingerDetected: false,
-      };
+    const defaultQuality: SignalQuality = {
+      strength: 0,
+      brightness: 0,
+      pulsatile: 0,
+      stability: 1,
+      isFingerDetected: false,
+    };
+
+    if (this.redSamples.length < 60 || this.greenSamples.length < 60) {
+      return defaultQuality;
     }
 
     const recent = this.redSamples.slice(-60);
     const recentGreen = this.greenSamples.slice(-60);
+
+    if (recent.length === 0 || recentGreen.length === 0) {
+      return defaultQuality;
+    }
+
     const mean = recent.reduce((a, b) => a + b, 0) / recent.length;
     const meanGreen = recentGreen.reduce((a, b) => a + b, 0) / recentGreen.length;
 
@@ -555,9 +562,10 @@ export class RPPGDetector {
       const quality = this.getSignalQuality();
       
       // Log quality metrics every 30 frames (~1 second at 30fps)
-      if (this.redSamples.length % 30 === 0) {
+      if (this.redSamples.length % 30 === 0 && this.redSamples.length >= 60) {
         const recent = this.redSamples.slice(-60);
-        const variance = recent.reduce((s, v) => s + (v - avgRed) ** 2, 0) / recent.length;
+        const recentMean = recent.reduce((a, b) => a + b, 0) / recent.length;
+        const variance = recent.reduce((s, v) => s + (v - recentMean) ** 2, 0) / recent.length;
         const stdDev = Math.sqrt(variance);
         
         console.log(`[RPPG] ${this.redSamples.length}smp: ` +
@@ -583,6 +591,8 @@ export class RPPGDetector {
    */
   private detrend(signal: number[]): number[] {
     const n = signal.length;
+    if (n === 0) return [];
+
     let sumX = 0,
       sumY = 0,
       sumXY = 0,
@@ -595,7 +605,10 @@ export class RPPGDetector {
       sumX2 += i * i;
     }
 
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const denom = n * sumX2 - sumX * sumX;
+    if (denom === 0) return signal.map(() => 0);
+
+    const slope = (n * sumXY - sumX * sumY) / denom;
     const intercept = (sumY - slope * sumX) / n;
 
     return signal.map((v, i) => v - (slope * i + intercept));

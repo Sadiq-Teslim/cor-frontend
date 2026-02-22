@@ -56,6 +56,7 @@ export default function FirstReadingScreen({ userId, onComplete }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectorRef = useRef<RPPGDetector | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -151,12 +152,8 @@ export default function FirstReadingScreen({ userId, onComplete }: Props) {
 
   const handleEarlyCompletion = useCallback(
     (result: RPPGResult) => {
-      // Calculate time elapsed (30 - current countdown value)
-      setCountdown((currentCountdown) => {
-        const timeElapsed = 30 - currentCountdown;
-        processResult(result, true, timeElapsed);
-        return currentCountdown;
-      });
+      const timeElapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+      processResult(result, true, timeElapsed);
     },
     [processResult],
   );
@@ -187,6 +184,7 @@ export default function FirstReadingScreen({ userId, onComplete }: Props) {
     setCountdown(30);
     setEarlyComplete(false);
     setCompletionTime(30);
+    startTimeRef.current = Date.now();
     setSignalQuality({
       strength: 0,
       brightness: 0,
