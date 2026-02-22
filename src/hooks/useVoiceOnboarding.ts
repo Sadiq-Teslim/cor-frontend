@@ -182,6 +182,15 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
     cancelRaf();
     setVoiceState('playing');
 
+    // Resume AudioContext if suspended (required for some browsers)
+    if (ctxRef.current?.state === 'suspended') {
+      try {
+        await ctxRef.current.resume();
+      } catch (e) {
+        console.warn('Could not resume AudioContext:', e);
+      }
+    }
+
     try {
       let url: string;
       if (PREGEN_LANGS.includes(langRef.current)) {
@@ -192,13 +201,15 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
       }
 
       const el = new Audio(url);
+      el.crossOrigin = 'anonymous'; // Enable CORS for audio
       audioEl.current = el;
 
       el.onended = () => {
         audioEl.current = null;
         if (!recRef.current) setVoiceState('listening');
       };
-      el.onerror = () => {
+      el.onerror = (e) => {
+        console.error('Audio playback error:', e);
         audioEl.current = null;
         if (!recRef.current) setVoiceState('listening');
       };
@@ -206,7 +217,8 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
       await el.play();
       // Start VAD monitoring for barge-in
       if (streamRef.current) monitor();
-    } catch {
+    } catch (e) {
+      console.error('Audio play failed:', e);
       setVoiceState('listening');
       if (streamRef.current) monitor();
     }
@@ -214,6 +226,11 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
 
   const playConfirmation = useCallback(async () => {
     try {
+      // Resume AudioContext if suspended
+      if (ctxRef.current?.state === 'suspended') {
+        await ctxRef.current.resume();
+      }
+      
       let url: string;
       if (PREGEN_LANGS.includes(langRef.current)) {
         url = `${API_BASE}/api/audio/confirmations/${langRef.current}/got-it.mp3`;
@@ -221,8 +238,11 @@ export function useVoiceOnboarding(langCode: string, onResult: (text: string) =>
         const blob = await voiceApi.speak('Got it!', langRef.current);
         url = URL.createObjectURL(blob);
       }
-      await new Audio(url).play();
-    } catch {
+      const audio = new Audio(url);
+      audio.crossOrigin = 'anonymous';
+      await audio.play();
+    } catch (e) {
+      console.error('Confirmation audio failed:', e);
       // silent fail
     }
   }, []);

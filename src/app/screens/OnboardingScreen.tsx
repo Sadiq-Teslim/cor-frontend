@@ -87,13 +87,18 @@ export default function OnboardingScreen({ data, step, isSubmitting, language, o
   const micInited = useRef(false);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [voiceTranscript, setVoiceTranscript] = useState('');
+  
+  // Keep a ref to the latest data to avoid stale closures in voice callbacks
+  const dataRef = useRef(data);
+  useEffect(() => { dataRef.current = data; }, [data]);
 
-  // Voice result handler
+  // Voice result handler - uses dataRef to always read latest data
   const handleVoiceResult = (text: string) => {
     setVoiceTranscript(text);
     const parsed = parseVoice(text, step);
     if (parsed) {
-      onUpdateData({ ...data, [parsed.field]: parsed.value });
+      // Use dataRef.current to get latest data, avoiding stale closure
+      onUpdateData({ ...dataRef.current, [parsed.field]: parsed.value });
       playConfirmation();
       autoTimer.current = setTimeout(() => {
         if (step === 8) onComplete();
@@ -152,7 +157,7 @@ export default function OnboardingScreen({ data, step, isSubmitting, language, o
       {options.map(opt => (
         <button
           key={opt}
-          onClick={() => onUpdateData({ ...data, [field]: opt })}
+          onClick={() => onUpdateData({ ...dataRef.current, [field]: opt })}
           className="px-5 py-2.5 rounded-full text-sm"
           style={{
             background: data[field] === opt ? '#00E5CC' : 'transparent',
@@ -242,7 +247,7 @@ export default function OnboardingScreen({ data, step, isSubmitting, language, o
               type="text"
               placeholder="Enter your name"
               value={data.name}
-              onChange={(e) => onUpdateData({ ...data, name: e.target.value })}
+              onChange={(e) => onUpdateData({ ...dataRef.current, name: e.target.value })}
               className="w-full px-4 py-3 text-base rounded-xl"
               style={{ background: '#0A0F1E', border: '1px solid #1E2D45', color: '#F0F4FF' }}
             />
@@ -252,7 +257,7 @@ export default function OnboardingScreen({ data, step, isSubmitting, language, o
               type="number"
               placeholder="Age"
               value={data.age}
-              onChange={(e) => onUpdateData({ ...data, age: e.target.value })}
+              onChange={(e) => onUpdateData({ ...dataRef.current, age: e.target.value })}
               className="w-full px-4 py-3 text-base rounded-xl"
               style={{ background: '#0A0F1E', border: '1px solid #1E2D45', color: '#F0F4FF' }}
             />
@@ -269,7 +274,7 @@ export default function OnboardingScreen({ data, step, isSubmitting, language, o
               max="12"
               placeholder="Hours"
               value={data.sleep}
-              onChange={(e) => onUpdateData({ ...data, sleep: e.target.value })}
+              onChange={(e) => onUpdateData({ ...dataRef.current, sleep: e.target.value })}
               className="w-full px-4 py-3 text-base rounded-xl"
               style={{ background: '#0A0F1E', border: '1px solid #1E2D45', color: '#F0F4FF' }}
             />

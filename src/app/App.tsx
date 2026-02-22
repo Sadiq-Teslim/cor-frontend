@@ -43,6 +43,16 @@ export default function App() {
   const [activeNav, setActiveNav] = useState('home');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Refs to track latest values for callbacks (avoid stale closures)
+  const onboardingDataRef = useRef(onboardingData);
+  const selectedLanguageRef = useRef(selectedLanguage);
+  const connectedDevicesRef = useRef(connectedDevices);
+  
+  // Keep refs in sync with state
+  useEffect(() => { onboardingDataRef.current = onboardingData; }, [onboardingData]);
+  useEffect(() => { selectedLanguageRef.current = selectedLanguage; }, [selectedLanguage]);
+  useEffect(() => { connectedDevicesRef.current = connectedDevices; }, [connectedDevices]);
+
   // On mount, if user already exists, skip to home
   useEffect(() => {
     if (userId && user) {
@@ -66,25 +76,30 @@ export default function App() {
   const mapActivity = (a: string) => a === 'Sedentary' ? 'low' as const : a === 'Moderate' ? 'moderate' as const : 'high' as const;
   const mapSmartwatch = (d: string) => d.includes('Apple') ? 'apple' as const : d.includes('Google') ? 'google' as const : d.includes('Samsung') ? 'samsung' as const : 'fitbit' as const;
 
-  // Complete onboarding via API
-  const completeOnboarding = async () => {
+  // Complete onboarding via API - uses refs to always read latest state
+  const completeOnboarding = useCallback(async () => {
+    // Read from refs to get latest values (avoids stale closure)
+    const data = onboardingDataRef.current;
+    const language = selectedLanguageRef.current;
+    const devices = connectedDevicesRef.current;
+
     setIsSubmitting(true);
     try {
-      const langCode = LANGUAGE_MAP[selectedLanguage] || 'en';
-      const smokesOrDrinks = onboardingData.smokeDrink === 'Yes' || onboardingData.smokeDrink === 'Sometimes';
+      const langCode = LANGUAGE_MAP[language] || 'en';
+      const smokesOrDrinks = data.smokeDrink === 'Yes' || data.smokeDrink === 'Sometimes';
       const response = await userApi.onboard({
-        name: onboardingData.name,
-        age: parseInt(onboardingData.age) || 25,
-        biologicalSex: mapSex(onboardingData.sex),
+        name: data.name,
+        age: parseInt(data.age) || 25,
+        biologicalSex: mapSex(data.sex),
         preferredLanguage: langCode,
-        hasHypertension: onboardingData.highBP || 'No',
-        medications: onboardingData.medication === 'Yes' ? undefined : 'No',
+        hasHypertension: data.highBP || 'No',
+        medications: data.medication === 'Yes' ? undefined : 'No',
         smokes: smokesOrDrinks,
         drinksAlcohol: smokesOrDrinks,
-        activityLevel: mapActivity(onboardingData.activity),
-        averageSleepHours: parseInt(onboardingData.sleep) || 7,
-        smartwatchConnected: connectedDevices.length > 0,
-        smartwatchType: connectedDevices.length > 0 ? mapSmartwatch(connectedDevices[0]) : undefined,
+        activityLevel: mapActivity(data.activity),
+        averageSleepHours: parseInt(data.sleep) || 7,
+        smartwatchConnected: devices.length > 0,
+        smartwatchType: devices.length > 0 ? mapSmartwatch(devices[0]) : undefined,
       });
       setUser(response.user);
       setUserId(response.user.id);
@@ -95,7 +110,7 @@ export default function App() {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [setUser, setUserId]);
 
   // Upload medical records via API
   const handleFileUpload = async (file: File) => {
