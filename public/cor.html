@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0A0F1E">
+  <meta name="description" content="Cor - Your heart has a guardian">
+  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQ29yIiwic2hvcnRfbmFtZSI6IkNvciIsInN0YXJ0X3VybCI6Ii8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMEEwRjFFIiwidGhlbWVfY29sb3IiOiIjMEEwRjFFIn0=">
+  <title>Cor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0F1E;
+      --card: #111827;
+      --border: #1E2D45;
+      --accent: #00E5CC;
+      --amber: #F5A623;
+      --alert: #FF6B6B;
+      --text: #F0F4FF;
+      --sub: #8896A8;
+      --radius: 12px;
+      --gap: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #060912;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    #root {
+      max-width: 480px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: var(--bg);
+      position: relative;
+    }
+
+    @media (max-width: 480px) {
+      #root {
+        max-width: 100%;
+      }
+    }
+
+    .screen {
+      display: none;
+      min-height: 100vh;
+      animation: fadeIn 150ms;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    @keyframes ring {
+      from { stroke-dashoffset: 283; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    button {
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    input, textarea {
+      font-family: 'Inter', sans-serif;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--accent);
+      color: #0A0F1E;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 16px;
+      border-radius: var(--radius);
+      margin-top: 48px;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 16px;
+      padding: 16px;
+      border-radius: var(--radius);
+      margin-top: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      padding: 10px 20px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      margin: 4px;
+      font-size: 14px;
+    }
+
+    .pill.selected {
+      background: var(--accent);
+      color: #0A0F1E;
+      border-color: var(--accent);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .back-arrow {
+      color: var(--sub);
+      font-size: 24px;
+      cursor: pointer;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+
+    #hey-cor-button {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0A0F1E;
+      font-size: 24px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    #hey-cor-button.visible {
+      display: flex;
+    }
+
+    #bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      height: 64px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: none;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 40;
+    }
+
+    #bottom-nav.visible {
+      display: flex;
+    }
+
+    .nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: var(--sub);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    .nav-tab.active {
+      color: var(--accent);
+    }
+
+    .nav-tab-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(6, 9, 18, 0.95);
+      z-index: 100;
+      overflow-y: auto;
+      padding: 32px 24px;
+      display: none;
+    }
+
+    .overlay.visible {
+      display: block;
+    }
+
+    .modal-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 480px;
+      max-width: 100%;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      padding: 24px;
+      z-index: 200;
+      display: none;
+    }
+
+    .modal-bottom.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function App() {
+      const [currentScreen, setCurrentScreen] = useState('screen-1');
+      const [selectedLanguage, setSelectedLanguage] = useState('English');
+      const [onboardingData, setOnboardingData] = useState({
+        name: 'Chidi',
+        age: '',
+        sex: '',
+        highBP: '',
+        medication: '',
+        smokeDrink: '',
+        activity: '',
+        sleep: ''
+      });
+      const [onboardingStep, setOnboardingStep] = useState(1);
+      const [fileUploaded, setFileUploaded] = useState(false);
+      const [connectedDevices, setConnectedDevices] = useState([]);
+      const [showHeyCor, setShowHeyCor] = useState(false);
+      const [showAlert, setShowAlert] = useState(false);
+      const [bpReading, setBpReading] = useState(null);
+      const [countdown, setCountdown] = useState(30);
+      const [isReading, setIsReading] = useState(false);
+      const [activeNav, setActiveNav] = useState('home');
+      const [medicationTaken, setMedicationTaken] = useState(false);
+      const [trendRange, setTrendRange] = useState('7D');
+      const [reportRange, setReportRange] = useState('7 days');
+      const [reportGenerated, setReportGenerated] = useState(false);
+      const [corResponse, setCorResponse] = useState("Ask me anything about your heart health...");
+      const [mealMode, setMealMode] = useState('camera');
+      const [mealAnalyzed, setMealAnalyzed] = useState(false);
+      const [mealAnalyzing, setMealAnalyzing] = useState(false);
+      const [feelingSelected, setFeelingSelected] = useState(null);
+
+      useEffect(() => {
+        const isPostOnboarding = !currentScreen.match(/screen-[1-6]/);
+        document.getElementById('hey-cor-button').classList.toggle('visible', isPostOnboarding);
+        document.getElementById('bottom-nav').classList.toggle('visible', isPostOnboarding);
+      }, [currentScreen]);
+
+      const showScreen = (id) => {
+        setCurrentScreen(id);
+        window.scrollTo(0, 0);
+      };
+
+      const startBPReading = (isBaseline = false) => {
+        setIsReading(true);
+        setCountdown(30);
+        setBpReading(null);
+        
+        const interval = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              setIsReading(false);
+              if (isBaseline) {
+                setBpReading({
+                  hr: 74,
+                  hrv: 52,
+                  status: 'normal',
+                  message: 'Your baseline is set. Cor will now personalise your monitoring.'
+                });
+              } else {
+                setBpReading({
+                  hr: 79,
+                  hrv: 46,
+                  status: 'elevated',
+                  message: 'Slightly elevated compared to your average this week. Worth monitoring.'
+                });
+              }
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      };
+
+      const analyzeMeal = () => {
+        setMealAnalyzing(true);
+        setTimeout(() => {
+          setMealAnalyzing(false);
+          setMealAnalyzed(true);
+        }, 2000);
+      };
+
+      const navigateTo = (tab) => {
+        setActiveNav(tab);
+        switch(tab) {
+          case 'home': showScreen('screen-7'); break;
+          case 'insights': showScreen('screen-11'); break;
+          case 'log': showScreen('screen-9'); break;
+          case 'settings': showScreen('screen-15'); break;
+        }
+      };
+
+      return (
+        <>
+          {/* Screen 1 - Welcome */}
+          <div id="screen-1" className={`screen ${currentScreen === 'screen-1' ? 'active' : ''}`}>
+            <div style={{
+              minHeight: '100vh',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '32px'
+            }}>
+              <div style={{
+                fontFamily: 'Inter',
+                fontWeight: 700,
+                fontSize: '72px',
+                color: 'var(--accent)',
+                textAlign: 'center'
+              }}>Cor</div>
+              <div style={{
+                fontFamily: 'Inter',
+                fontWeight: 400,
+                fontSize: '18px',
+                color: 'var(--sub)',
+                textAlign: 'center',
+                marginTop: '12px'
+              }}>Your heart has a guardian.</div>
+              <button className="btn-primary" onClick={() => showScreen('screen-2')}>
+                Get Started
+              </button>
+            </div>
+          </div>
+
+          {/* Screen 2 - Language Select */}
+          <div id="screen-2" className={`screen ${currentScreen === 'screen-2' ? 'active' : ''}`}>
+            <div style={{ padding: '32px' }}>
+              <h1 style={{ fontWeight: 700, fontSize: '24px', marginBottom: '24px' }}>
+                Choose your language
+              </h1>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+                marginBottom: '32px'
+              }}>
+                {['English', 'Pidgin', 'Yoruba', 'Igbo', 'Hausa', 'French'].map(lang => (
+                  <div
+                    key={lang}
+                    onClick={() => setSelectedLanguage(lang)}
+                    style={{
+                      background: 'var(--card)',
+                      border: `1px solid ${selectedLanguage === lang ? 'var(--accent)' : 'var(--border)'}`,
+                      color: selectedLanguage === lang ? 'var(--accent)' : 'var(--text)',
+                      borderRadius: 'var(--radius)',
+                      padding: '20px',
+                      textAlign: 'center',
+                      fontWeight: 600,
+                      fontSize: '16px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {lang}
+                  </div>
+                ))}
+              </div>
+              {selectedLanguage && (
+                <button className="btn-primary" style={{ marginTop: 0 }} onClick={() => showScreen('screen-3')}>
+                  Continue
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Screen 3 - Onboarding Questions */}
+          <div id="screen-3" className={`screen ${currentScreen === 'screen-3' ? 'active' : ''}`}>
+            <div>
+              <div style={{
+                height: '4px',
+                background: 'var(--border)',
+                position: 'relative'
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${(onboardingStep / 8) * 100}%`,
+                  background: 'var(--accent)',
+                  transition: 'width 0.3s'
+                }}></div>
+              </div>
+              <div style={{
+                padding: '16px 32px',
+                fontSize: '13px',
+                color: 'var(--sub)'
+              }}>
+                Step {onboardingStep} of 8
+              </div>
+              <div style={{ padding: '0 32px 32px' }}>
+                <div className="card">
+                  {onboardingStep === 1 && (
+                    <>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>
+                        What is your name?
+                      </h2>
+                      <input
+                        type="text"
+                        placeholder="Enter your name"
+                        value={onboardingData.name}
+                        onChange={(e) => setOnboardingData({...onboardingData, name: e.target.value})}
+                      />
+                    </>
+                  )}
+                  {onboardingStep === 2 && (
+                    <>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>
+                        How old are you?
+                      </h2>
+                      <input
+                        type="number"
+                        placeholder="Age"
+                        value={onboardingData.age}
+                        onChange={(e) => setOnboardingData({...onboardingData, age: e.target.value})}
+                      />
+                    </>
+                  )}
+                  {onboardingStep === 3 && (
+                    <>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>
+                        Biological sex?
+                      </h2>
+                      <div>
+                        {['Male', 'Female', 'Prefer not to say'].map(opt => (
+                          <button
+                            key={opt}
+                            className={`pill ${onboardingData.sex === opt ? 'selected' : ''}`}
+                            onClick={() => setOnboardingData({...onboardingData, sex: opt})}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {onboardingStep === 4 && (
+                    <>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>
+                        Ever diagnosed with high blood pressure?
+                      </h2>
+                      <div>
+                        {['Yes', 'No', 'Not sure'].map(opt => (
+                          <button
+                            key={opt}
+                            className={`pill ${onboardingData.highBP === opt ? 'selected' : ''}`}
+                            onClick={() => setOnboardingData({...onboardingData, highBP: opt})}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {onboardingStep === 5 && (
+                    <>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>
+                        Do you take regular medication?
+                      </h2>
+                      <div>
+                        {['Yes', 'No'].map(opt => (
+                          <button
+                            key={opt}
+                            className={`pill ${onboardingData.medication === opt ? 'selected' : ''}`}
+                            onClick={() => setOnboardingData({...onboardingData, medication: opt})}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {onboardingStep === 6 && (
+                    <>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>
+                        Do you smoke or drink alcohol?
+                      </h2>
+                      <div>
+                        {['Yes', 'No', 'Sometimes'].map(opt => (
+                          <button
+                            key={opt}
+                            className={`pill ${onboardingData.smokeDrink === opt ? 'selected' : ''}`}
+                            onClick={() => setOnboardingData({...onboardingData, smokeDrink: opt})}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {onboardingStep === 7 && (
+                    <>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>
+                        How active are you?
+                      </h2>
+                      <div>
+                        {['Sedentary', 'Moderate', 'Active'].map(opt => (
+                          <button
+                            key={opt}
+                            className={`pill ${onboardingData.activity === opt ? 'selected' : ''}`}
+                            onClick={() => setOnboardingData({...onboardingData, activity: opt})}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {onboardingStep === 8 && (
+                    <>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>
+                        How many hours do you sleep on average?
+                      </h2>
+                      <input
+                        type="number"
+                        min="1"
+                        max="12"
+                        placeholder="Hours"
+                        value={onboardingData.sleep}
+                        onChange={(e) => setOnboardingData({...onboardingData, sleep: e.target.value})}
+                      />
+                    </>
+                  )}
+                </div>
+                <button
+                  className="btn-primary"
+                  onClick={() => {
+                    if (onboardingStep === 8) {
+                      showScreen('screen-4');
+                    } else {
+                      setOnboardingStep(onboardingStep + 1);
+                    }
+                  }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Screen 4 - Medical Records Upload */}
+          <div id="screen-4" className={`screen ${currentScreen === 'screen-4' ? 'active' : ''}`}>
+            <div style={{ padding: '32px' }}>
+              <h1 style={{ fontWeight: 700, fontSize: '24px' }}>
+                Do you have health records?
+              </h1>
+              <p style={{ fontSize: '14px', color: 'var(--sub)', marginTop: '8px', marginBottom: '32px' }}>
+                Optional — helps Cor know you better from day one.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div
+                  className="card"
+                  onClick={() => {
+                    document.getElementById('file-input').click();
+                  }}
+                  style={{ cursor: 'pointer', textAlign: 'center' }}
+                >
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>📄</div>
+                  <div style={{ fontWeight: 600, fontSize: '16px' }}>Upload a file</div>
+                  <div style={{ fontSize: '14px', color: 'var(--sub)', marginTop: '4px' }}>
+                    PDF or image
+                  </div>
+                  {fileUploaded && (
+                    <div style={{ marginTop: '12px', color: 'var(--accent)', fontSize: '14px' }}>
+                      Got it. I've noted your history.
+                    </div>
+                  )}
+                </div>
+                <input
+                  id="file-input"
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={() => setFileUploaded(true)}
+                  accept=".pdf,image/*"
+                />
+                <div
+                  className="card"
+                  onClick={() => showScreen('screen-5')}
+                  style={{ cursor: 'pointer', textAlign: 'center' }}
+                >
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>→</div>
+                  <div style={{ fontWeight: 600, fontSize: '16px' }}>Skip for now</div>
+                </div>
+              </div>
+              {fileUploaded && (
+                <button className="btn-primary" onClick={() => showScreen('screen-5')}>
+                  Continue
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Screen 5 - Smartwatch Connect */}
+          <div id="screen-5" className={`screen ${currentScreen === 'screen-5' ? 'active' : ''}`}>
+            <div style={{ padding: '32px' }}>
+              <h1 style={{ fontWeight: 700, fontSize: '24px', marginBottom: '24px' }}>
+                Do you own a smartwatch?
+              </h1>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+                marginBottom: '24px'
+              }}>
+                {['Apple Health', 'Google Health', 'Samsung Health', 'Fitbit'].map(device => (
+                  <div key={device} className="card" style={{ textAlign: 'center' }}>
+                    <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '12px' }}>
+                      {device}
+                    </div>
+                    {!connectedDevices.includes(device) ? (
+                      <button
+                        onClick={() => setConnectedDevices([...connectedDevices, device])}
+                        style={{
+                          border: '1px solid var(--accent)',
+                          background: 'transparent',
+                          color: 'var(--accent)',
+                          borderRadius: '8px',
+                          padding: '6px 12px',
+                          fontSize: '13px'
+                        }}
+                      >
+                        Connect
+                      </button>
+                    ) : (
+                      <div style={{ color: 'var(--accent)', fontSize: '20px' }}>✓</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div
+                onClick={() => showScreen('screen-6')}
+                style={{
+                  textAlign: 'center',
+                  color: 'var(--sub)',
+                  fontSize: '14px',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  marginBottom: '16px'
+                }}
+              >
+                I don't have one
+              </div>
+              {connectedDevices.length > 0 && (
+                <button className="btn-primary" style={{ marginTop: 0 }} onClick={() => showScreen('screen-6')}>
+                  Continue
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Screen 6 - First BP Reading */}
+          <div id="screen-6" className={`screen ${currentScreen === 'screen-6' ? 'active' : ''}`}>
+            <div style={{ padding: '32px', textAlign: 'center' }}>
+              <h1 style={{ fontWeight: 700, fontSize: '24px', marginBottom: '12px' }}>
+                Let's get your baseline
+              </h1>
+              <p style={{ fontSize: '16px', color: 'var(--sub)', marginBottom: '32px' }}>
+                Place your finger gently over your phone's back camera and hold still.
+              </p>
+              
+              {!isReading && !bpReading && (
+                <button className="btn-primary" onClick={() => startBPReading(true)}>
+                  Start Reading
+                </button>
+              )}
+
+              {isReading && (
+                <>
+                  <svg width="96" height="96" style={{ margin: '0 auto 16px' }}>
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="45"
+                      stroke="var(--border)"
+                      strokeWidth="6"
+                      fill="none"
+                    />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="45"
+                      stroke="var(--accent)"
+                      strokeWidth="6"
+                      fill="none"
+                      strokeDasharray="283"
+                      strokeDashoffset="283"
+                      style={{
+                        transformOrigin: 'center',
+                        transform: 'rotate(-90deg)',
+                        animation: 'ring 30s linear forwards'
+                      }}
+                    />
+                    <text
+                      x="48"
+                      y="58"
+                      textAnchor="middle"
+                      fontSize="28"
+                      fontWeight="700"
+                      fill="var(--text)"
+                    >
+                      {countdown}
+                    </text>
+                  </svg>
+                  <div style={{
+                    color: countdown > 20 || countdown < 15 ? 'var(--accent)' : 'var(--amber)',
+                    fontSize: '14px'
+                  }}>
+                    {countdown > 20 || countdown < 15 ? 'Signal: Good' : 'Adjust finger'}
+                  </div>
+                </>
+              )}
+
+              {bpReading && (
+                <>
+                  <div className="card" style={{ textAlign: 'left', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>
+                      Heart Rate: {bpReading.hr} bpm — Normal
+                    </div>
+                    <div style={{ fontSize: '16px', marginBottom: '12px' }}>
+                      HRV: {bpReading.hrv}ms — Healthy range
+                    </div>
+                    <div style={{ fontSize: '15px', color: 'var(--text)', lineHeight: 1.6 }}>
+                      {bpReading.message}
+                    </div>
+                  </div>
+                  <button className="btn-primary" onClick={() => showScreen('screen-7')}>
+                    Enter Cor
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Screen 7 - Home Screen */}
+          <div id="screen-7" className={`screen ${currentScreen === 'screen-7' ? 'active' : ''}`}>
+            <div style={{ padding: '24px 24px 140px 24px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <h1 style={{ fontWeight: 700, fontSize: '22px' }}>
+                  Good morning, {onboardingData.name || 'Chidi'}
+                </h1>
+                <div style={{ fontSize: '13px', color: 'var(--sub)' }}>
+                  Saturday, 21 Feb
+                </div>
+              </div>
+
+              <div className="card" style={{
+                borderLeft: '3px solid var(--accent)',
+                marginBottom: '12px'
+              }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  color: 'var(--accent)',
+                  marginBottom: '8px'
+                }}>
+                  HEALTH PULSE
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 600 }}>
+                  Your stress pattern has been climbing. Let's check in.
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowAlert(true)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--alert)',
+                  color: 'var(--alert)',
+                  fontSize: '12px',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  marginBottom: '20px'
+                }}
+              >
+                ⚡ Trigger Alert Demo
+              </button>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+                marginBottom: '16px'
+              }}>
+                <div
+                  className="card"
+                  onClick={() => showScreen('screen-8')}
+                  style={{ cursor: 'pointer', padding: '16px' }}
+                >
+                  <div style={{ fontSize: '28px', color: 'var(--accent)', marginBottom: '8px' }}>🫀</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600 }}>Check BP</div>
+                </div>
+                <div
+                  className="card"
+                  onClick={() => showScreen('screen-9')}
+                  style={{ cursor: 'pointer', padding: '16px' }}
+                >
+                  <div style={{ fontSize: '28px', color: 'var(--amber)', marginBottom: '8px' }}>🍽</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600 }}>Log a Meal</div>
+                </div>
+                <div
+                  className="card"
+                  onClick={() => showScreen('screen-12')}
+                  style={{ cursor: 'pointer', padding: '16px' }}
+                >
+                  <div style={{ fontSize: '28px', color: 'var(--sub)', marginBottom: '8px' }}>📈</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600 }}>My Trend</div>
+                </div>
+                <div
+                  className="card"
+                  onClick={() => showScreen('screen-10')}
+                  style={{ cursor: 'pointer', padding: '16px' }}
+                >
+                  <div style={{ fontSize: '28px', color: '#A78BFA', marginBottom: '8px' }}>💊</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600 }}>Medications</div>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'rgba(0,229,204,0.08)',
+                border: '1px solid var(--accent)',
+                borderRadius: 'var(--radius)',
+                padding: '12px 16px',
+                marginBottom: '12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--accent)' }}>
+                  💊 Lisinopril due at 8:00 PM
+                </div>
+                <button style={{ color: 'var(--accent)', fontSize: '18px' }}>×</button>
+              </div>
+
+              <div style={{ fontSize: '14px', color: 'var(--sub)', marginBottom: '16px' }}>
+                Mostly sedentary today — a short walk would help.
+              </div>
+
+              <div
+                onClick={() => showScreen('screen-14')}
+                style={{
+                  textAlign: 'center',
+                  color: 'var(--accent)',
+                  fontSize: '14px',
+                  textDecoration: 'underline',
+                  cursor: 'pointer'
+                }}
+              >
+                Share health report with your doctor
+              </div>
+            </div>
+          </div>
+
+          {/* Screen 8 - BP Check */}
+          <div id="screen-8" className={`screen ${currentScreen === 'screen-8' ? 'active' : ''}`}>
+            <div style={{ padding: '24px 24px 140px 24px' }}>
+              <div className="back-arrow" onClick={() => showScreen('screen-7')}>←</div>
+              
+              <h1 style={{ fontWeight: 700, fontSize: '22px', marginBottom: '8px' }}>
+                Check your blood pressure
+              </h1>
+              <p style={{ fontSize: '14px', color: 'var(--sub)', marginBottom: '32px' }}>
+                Place your finger over your back camera and hold still for 30 seconds.
+              </p>
+
+              {!isReading && !bpReading && (
+                <button className="btn-primary" onClick={() => startBPReading(false)}>
+                  Start Reading
+                </button>
+              )}
+
+              {isReading && (
+                <div style={{ textAlign: 'center' }}>
+                  <svg width="96" height="96" style={{ margin: '0 auto 16px' }}>
+                    <circle cx="48" cy="48" r="45" stroke="var(--border)" strokeWidth="6" fill="none" />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="45"
+                      stroke="var(--accent)"
+                      strokeWidth="6"
+                      fill="none"
+                      strokeDasharray="283"
+                      strokeDashoffset="283"
+                      style={{
+                        transformOrigin: 'center',
+                        transform: 'rotate(-90deg)',
+                        animation: 'ring 30s linear forwards'
+                      }}
+                    />
+                    <text x="48" y="58" textAnchor="middle" fontSize="28" fontWeight="700" fill="var(--text)">
+                      {countdown}
+                    </text>
+                  </svg>
+                  <div style={{
+                    color: countdown > 20 || countdown < 15 ? 'var(--accent)' : 'var(--amber)',
+                    fontSize: '14px'
+                  }}>
+                    {countdown > 20 || countdown < 15 ? 'Signal: Good' : 'Adjust finger'}
+                  </div>
+                </div>
+              )}
+
+              {bpReading && (
+                <>
+                  <div className="card" style={{ marginBottom: '16px' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>
+                      Today's Reading
+                    </h2>
+                    <div style={{ fontSize: '16px', marginBottom: '8px' }}>
+                      HR: {bpReading.hr} bpm
+                    </div>
+                    <div style={{ fontSize: '16px', marginBottom: '12px' }}>
+                      HRV: {bpReading.hrv}ms
+                    </div>
+                    <div style={{
+                      fontSize: '15px',
+                      color: 'var(--amber)',
+                      lineHeight: 1.6
+                    }}>
+                      {bpReading.message}
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px' }}>
+                      How are you feeling?
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                      {[
+                        { emoji: '😊', label: 'Good' },
+                        { emoji: '😐', label: 'Okay' },
+                        { emoji: '😔', label: 'Off' }
+                      ].map(feeling => (
+                        <div
+                          key={feeling.label}
+                          onClick={() => setFeelingSelected(feeling.label)}
+                          style={{
+                            padding: '12px 20px',
+                            border: `1px solid ${feelingSelected === feeling.label ? 'var(--accent)' : 'var(--border)'}`,
+                            background: feelingSelected === feeling.label ? 'var(--card)' : 'transparent',
+                            borderRadius: 'var(--radius)',
+                            cursor: 'pointer',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <div style={{ fontSize: '32px', marginBottom: '4px' }}>{feeling.emoji}</div>
+                          <div style={{ fontSize: '13px' }}>{feeling.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button className="btn-secondary" style={{ marginTop: 0 }}>
+                    Share Result
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Screen 9 - Food Logger */}
+          <div id="screen-9" className={`screen ${currentScreen === 'screen-9' ? 'active' : ''}`}>
+            <div style={{ padding: '24px 24px 140px 24px' }}>
+              <div className="back-arrow" onClick={() => showScreen('screen-7')}>←</div>
+              
+              <h1 style={{ fontWeight: 700, fontSize: '22px', marginBottom: '16px' }}>
+                What are you eating?
+              </h1>
+
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+                {['camera', 'voice'].map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      setMealMode(mode);
+                      setMealAnalyzed(false);
+                    }}
+                    className={`pill ${mealMode === mode ? 'selected' : ''}`}
+                    style={{ flex: 1 }}
+                  >
+                    {mode === 'camera' ? '📷 Camera' : '🎤 Voice'}
+                  </button>
+                ))}
+              </div>
+
+              {mealMode === 'camera' && !mealAnalyzed && !mealAnalyzing && (
+                <div
+                  onClick={analyzeMeal}
+                  style={{
+                    border: '2px dashed var(--border)',
+                    borderRadius: 'var(--radius)',
+                    height: '200px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    marginBottom: '16px'
+                  }}
+                >
+                  <div style={{ textAlign: 'center', color: 'var(--sub)', fontSize: '14px' }}>
+                    Tap to snap your meal
+                  </div>
+                </div>
+              )}
+
+              {mealMode === 'voice' && !mealAnalyzed && !mealAnalyzing && (
+                <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎤</div>
+                  <div style={{ color: 'var(--sub)', fontSize: '14px', marginBottom: '16px' }}>
+                    Describe your meal
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g., Jollof rice with chicken"
+                    style={{ marginBottom: '12px' }}
+                  />
+                  <button className="btn-primary" style={{ marginTop: 0 }} onClick={analyzeMeal}>
+                    Analyse
+                  </button>
+                </div>
+              )}
+
+              {mealAnalyzing && (
+                <div style={{ textAlign: 'center', color: 'var(--accent)', fontSize: '16px', padding: '40px' }}>
+                  Analysing your meal...
+                </div>
+              )}
+
+              {mealAnalyzed && (
+                <div className="card">
+                  <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '12px' }}>
+                    🍚 Jollof Rice
+                  </h2>
+                  <div style={{ fontSize: '14px', color: 'var(--sub)', marginBottom: '12px' }}>
+                    Calories: 520 kcal
+                  </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <span style={{
+                      color: 'var(--alert)',
+                      fontWeight: 600,
+                      background: 'rgba(255,107,107,0.1)',
+                      padding: '4px 10px',
+                      borderRadius: '99px',
+                      fontSize: '13px'
+                    }}>
+                      Sodium: HIGH
+                    </span>
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    color: 'var(--sub)',
+                    lineHeight: 1.6,
+                    marginTop: '12px'
+                  }}>
+                    <strong style={{ color: 'var(--text)' }}>BP Impact:</strong> High sodium — may raise
+                    your BP over the next 4 hours. Drink water and go easy on salt at your next meal.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Screen 10 - Medication Tracker */}
+          <div id="screen-10" className={`screen ${currentScreen === 'screen-10' ? 'active' : ''}`}>
+            <div style={{ padding: '24px 24px 140px 24px' }}>
+              <div className="back-arrow" onClick={() => showScreen('screen-7')}>←</div>
+              
+              <h1 style={{ fontWeight: 700, fontSize: '22px', marginBottom: '24px' }}>
+                Medications
+              </h1>
+
+              <div className="card" style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: 600 }}>Lisinopril 10mg</div>
+                    <div style={{ fontSize: '14px', color: 'var(--sub)' }}>8:00 PM</div>
+                  </div>
+                  <label style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
+                    <input
+                      type="checkbox"
+                      checked={medicationTaken}
+                      onChange={() => setMedicationTaken(!medicationTaken)}
+                      style={{ opacity: 0, width: 0, height: 0 }}
+                    />
+                    <span style={{
+                      position: 'absolute',
+                      cursor: 'pointer',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: medicationTaken ? 'var(--accent)' : 'var(--border)',
+                      borderRadius: '24px',
+                      transition: '0.3s'
+                    }}>
+                      <span style={{
+                        position: 'absolute',
+                        content: '',
+                        height: '18px',
+                        width: '18px',
+                        left: medicationTaken ? '23px' : '3px',
+                        bottom: '3px',
+                        background: 'white',
+                        borderRadius: '50%',
+                        transition: '0.3s'
+                      }}></span>
+                    </span>
+                  </label>
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--amber)' }}>
+                  ⚠ BP-relevant medication
+                </div>
+              </div>
+
+              <div style={{ textAlign: 'center', color: 'var(--sub)', fontSize: '14px', marginTop: '32px' }}>
+                Add your medications and Cor will factor them into your monitoring.
+              </div>
+
+              <button
+                style={{
+                  position: 'fixed',
+                  bottom: '80px',
+                  right: '24px',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  background: 'var(--accent)',
+                  color: '#0A0F1E',
+                  fontSize: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onClick={() => alert('Add medication modal would open here')}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Screen 11 - Lifestyle Insights */}
+          <div id="screen-11" className={`screen ${currentScreen === 'screen-11' ? 'active' : ''}`}>
+            <div style={{ padding: '24px 24px 140px 24px' }}>
+              <h1 style={{ fontWeight: 700, fontSize: '22px', marginBottom: '20px' }}>
+                Your week in review
+              </h1>
+
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                {[
+                  { icon: '🌙', label: 'Sleep', status: 'Fair', color: 'var(--amber)' },
+                  { icon: '🏃', label: 'Activity', status: 'Low', color: 'var(--alert)' },
+                  { icon: '🍽', label: 'Food', status: 'Fair', color: 'var(--amber)' },
+                  { icon: '💭', label: 'Stress', status: 'High', color: 'var(--alert)' }
+                ].map(metric => (
+                  <div key={metric.label} className="card" style={{ flex: 1, padding: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '4px' }}>{metric.icon}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--sub)', marginBottom: '4px' }}>
+                      {metric.label}
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: metric.color }}>
+                      {metric.status}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="card" style={{ marginBottom: '16px' }}>
+                <p style={{ fontSize: '15px', lineHeight: 1.6 }}>
+                  This week your sleep averaged 5 hours — below your usual 7. You've been largely sedentary 
+                  and your sodium intake has been high on 4 of 7 days. Together, these patterns are putting 
+                  your cardiovascular system under moderate stress.
+                </p>
+              </div>
+
+              <div style={{
+                background: 'rgba(0,229,204,0.08)',
+                border: '1px solid var(--accent)',
+                borderRadius: 'var(--radius)',
+                padding: '16px'
+              }}>
+                <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--accent)' }}>
+                  Try a 15-minute walk tomorrow morning and aim to sleep by 10pm.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Screen 12 - Trend History */}
+          <div id="screen-12" className={`screen ${currentScreen === 'screen-12' ? 'active' : ''}`}>
+            <div style={{ padding: '24px 24px 140px 24px' }}>
+              <div className="back-arrow" onClick={() => showScreen('screen-7')}>←</div>
+              
+              <h1 style={{ fontWeight: 700, fontSize: '22px', marginBottom: '16px' }}>
+                My Trend
+              </h1>
+
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', justifyContent: 'center' }}>
+                {['7D', '14D', '30D'].map(range => (
+                  <button
+                    key={range}
+                    onClick={() => setTrendRange(range)}
+                    className={`pill ${trendRange === range ? 'selected' : ''}`}
+                  >
+                    {range}
+                  </button>
+                ))}
+              </div>
+
+              <svg width="100%" height="160" style={{ marginBottom: '24px' }}>
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style={{ stopColor: 'var(--accent)', stopOpacity: 0.3 }} />
+                    <stop offset="100%" style={{ stopColor: 'var(--accent)', stopOpacity: 0 }} />
+                  </linearGradient>
+                </defs>
+                <polygon
+                  points="0,120 50,100 100,90 150,110 200,85 250,95 300,80 300,160 0,160"
+                  fill="url(#gradient)"
+                />
+                <polyline
+                  points="0,120 50,100 100,90 150,110 200,85 250,95 300,80"
+                  stroke="var(--accent)"
+                  strokeWidth="2"
+                  fill="none"
+                />
+              </svg>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="card" style={{ padding: '16px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sub)', marginBottom: '4px' }}>
+                    Best day
+                  </div>
+                  <div style={{ fontSize: '14px' }}>
+                    Tuesday — Low stress, good sleep.
+                  </div>
+                </div>
+                <div className="card" style={{ padding: '16px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sub)', marginBottom: '4px' }}>
+                    Worst day
+                  </div>
+                  <div style={{ fontSize: '14px', color: 'var(--alert)' }}>
+                    Thursday — Elevated BP, poor sleep.
+                  </div>
+                </div>
+                <div className="card" style={{ padding: '16px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sub)', marginBottom: '4px' }}>
+                    Key pattern
+                  </div>
+                  <div style={{ fontSize: '14px', color: 'var(--amber)' }}>
+                    Stress spikes consistently mid-week.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Screen 14 - Clinical Share */}
+          <div id="screen-14" className={`screen ${currentScreen === 'screen-14' ? 'active' : ''}`}>
+            <div style={{ padding: '24px 24px 140px 24px' }}>
+              <div className="back-arrow" onClick={() => showScreen('screen-7')}>←</div>
+              
+              <h1 style={{ fontWeight: 700, fontSize: '22px', marginBottom: '8px' }}>
+                Share your health report
+              </h1>
+              <p style={{ fontSize: '14px', color: 'var(--sub)', marginBottom: '16px' }}>
+                Choose a time range
+              </p>
+
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', justifyContent: 'center' }}>
+                {['7 days', '14 days', '30 days'].map(range => (
+                  <button
+                    key={range}
+                    onClick={() => setReportRange(range)}
+                    className={`pill ${reportRange === range ? 'selected' : ''}`}
+                  >
+                    {range}
+                  </button>
+                ))}
+              </div>
+
+              <div className="card" style={{ marginBottom: '24px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  color: 'var(--sub)',
+                  marginBottom: '12px'
+                }}>
+                  REPORT INCLUDES
+                </div>
+                {[
+                  'Cardiovascular Stress Score trend',
+                  'BP readings',
+                  'Sleep summary',
+                  'Food patterns',
+                  'Medications logged',
+                  'Alerts fired'
+                ].map(item => (
+                  <div key={item} style={{ fontSize: '14px', marginBottom: '8px' }}>
+                    <span style={{ color: 'var(--accent)', marginRight: '8px' }}>✓</span>
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              {!reportGenerated ? (
+                <button
+                  className="btn-primary"
+                  style={{ marginTop: 0 }}
+                  onClick={() => {
+                    setTimeout(() => setReportGenerated(true), 1500);
+                  }}
+                >
+                  Generate Report
+                </button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <button
+                    style={{
+                      width: '100%',
+                      background: '#25D366',
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: '16px',
+                      padding: '16px',
+                      borderRadius: 'var(--radius)'
+                    }}
+                    onClick={() => alert('Opening WhatsApp...')}
+                  >
+                    Share via WhatsApp
+                  </button>
+                  <button className="btn-secondary" style={{ marginTop: 0 }} onClick={() => alert('Opening email...')}>
+                    Share via Email
+                  </button>
+                  <button className="btn-secondary" style={{ marginTop: 0 }} onClick={() => alert('Downloading PDF...')}>
+                    Download PDF
+                  </button>
+                </div>
+              )}
+
+              <p style={{
+                fontSize: '12px',
+                color: 'var(--sub)',
+                textAlign: 'center',
+                marginTop: '16px'
+              }}>
+                This is a wellness report, not a clinical diagnosis.
+              </p>
+            </div>
+          </div>
+
+          {/* Screen 15 - Settings */}
+          <div id="screen-15" className={`screen ${currentScreen === 'screen-15' ? 'active' : ''}`}>
+            <div style={{ padding: '24px 24px 140px 24px' }}>
+              <h1 style={{ fontWeight: 700, fontSize: '22px', marginBottom: '24px' }}>
+                Settings
+              </h1>
+
+              <div style={{ marginTop: '20px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  color: 'var(--sub)',
+                  marginBottom: '8px'
+                }}>
+                  PREFERENCES
+                </div>
+                {[
+                  { label: 'Language', value: selectedLanguage },
+                  { label: 'Hey Cor wake word', toggle: true },
+                  { label: 'Notifications', toggle: true }
+                ].map(item => (
+                  <div key={item.label} style={{
+                    padding: '16px 0',
+                    borderBottom: '1px solid var(--border)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer'
+                  }}>
+                    <div>{item.label}</div>
+                    {item.value && <div style={{ color: 'var(--sub)' }}>{item.value}</div>}
+                    {item.toggle && <div style={{ color: 'var(--sub)' }}>›</div>}
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: '20px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  color: 'var(--sub)',
+                  marginBottom: '8px'
+                }}>
+                  CONNECTIONS
+                </div>
+                <div style={{
+                  padding: '16px 0',
+                  borderBottom: '1px solid var(--border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer'
+                }}>
+                  <div>Smartwatch</div>
+                  <div style={{ color: 'var(--accent)' }}>
+                    {connectedDevices[0] || 'Apple Health'} — Connected
+                  </div>
+                </div>
+                <div style={{
+                  padding: '16px 0',
+                  borderBottom: '1px solid var(--border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer'
+                }}>
+                  <div>Medical records</div>
+                  <div style={{ color: 'var(--sub)' }}>
+                    {fileUploaded ? '1 file uploaded' : 'None'}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '20px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  color: 'var(--sub)',
+                  marginBottom: '8px'
+                }}>
+                  PRIVACY & DATA
+                </div>
+                {[
+                  { label: 'View stored data' },
+                  { label: 'Delete my data', alert: true },
+                  { label: 'Consent management' }
+                ].map(item => (
+                  <div key={item.label} style={{
+                    padding: '16px 0',
+                    borderBottom: '1px solid var(--border)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    color: item.alert ? 'var(--alert)' : 'var(--text)'
+                  }}>
+                    <div>{item.label}</div>
+                    {!item.alert && <div style={{ color: 'var(--sub)' }}>›</div>}
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: '20px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  color: 'var(--sub)',
+                  marginBottom: '8px'
+                }}>
+                  ABOUT
+                </div>
+                {[
+                  { label: 'How Cor works' },
+                  { label: 'Clinical disclaimer' }
+                ].map(item => (
+                  <div key={item.label} style={{
+                    padding: '16px 0',
+                    borderBottom: '1px solid var(--border)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer'
+                  }}>
+                    <div>{item.label}</div>
+                    <div style={{ color: 'var(--sub)' }}>›</div>
+                  </div>
+                ))}
+                <div style={{
+                  padding: '16px 0',
+                  borderBottom: '1px solid var(--border)',
+                  color: 'var(--sub)'
+                }}>
+                  Version — Cor v1.0 — Hackathon Build
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Alert Overlay (Screen 13) */}
+          <div className={`overlay ${showAlert ? 'visible' : ''}`}>
+            <div style={{ maxWidth: '400px', margin: '0 auto' }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: 'var(--alert)',
+                margin: '0 auto 24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                animation: 'pulse 2s ease-in-out infinite'
+              }}>
+                <div style={{ fontSize: '32px', color: 'white' }}>♥</div>
+              </div>
+
+              <div className="card" style={{ marginBottom: '16px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  color: 'var(--sub)',
+                  marginBottom: '8px'
+                }}>
+                  WHAT I NOTICED
+                </div>
+                <p style={{ fontSize: '15px', lineHeight: 1.6 }}>
+                  Your cardiovascular stress has been elevated for 6 days in a row. Your sleep has 
+                  averaged 5 hours and you have been mostly sedentary.
+                </p>
+              </div>
+
+              <div className="card" style={{ marginBottom: '16px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  color: 'var(--sub)',
+                  marginBottom: '8px'
+                }}>
+                  WHAT THIS MEANS
+                </div>
+                <p style={{ fontSize: '15px', lineHeight: 1.6 }}>
+                  This pattern is consistent with early-stage cardiovascular stress. It does not mean 
+                  something is wrong — but it is worth paying attention to.
+                </p>
+              </div>
+
+              <div className="card" style={{ marginBottom: '16px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  color: 'var(--sub)',
+                  marginBottom: '8px'
+                }}>
+                  WHAT TO DO NOW
+                </div>
+                <p style={{ fontSize: '15px', lineHeight: 1.6 }}>
+                  1. Drink a glass of water now.<br/>
+                  2. Take a 10-minute walk today.<br/>
+                  3. Get a physical BP check this week.
+                </p>
+              </div>
+
+              <button
+                className="btn-primary"
+                style={{ marginTop: 0 }}
+                onClick={() => alert('Opening maps...')}
+              >
+                Find a BP check near me
+              </button>
+
+              <button className="btn-secondary" onClick={() => alert('Reminder set')}>
+                Remind me in 2 hours
+              </button>
+
+              <div
+                onClick={() => setShowAlert(false)}
+                style={{
+                  textAlign: 'center',
+                  color: 'var(--sub)',
+                  fontSize: '13px',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  marginTop: '16px'
+                }}
+              >
+                Dismiss
+              </div>
+            </div>
+          </div>
+
+          {/* Hey Cor Modal */}
+          <div className={`modal-bottom ${showHeyCor ? 'visible' : ''}`}>
+            <div
+              onClick={() => setShowHeyCor(false)}
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                color: 'var(--sub)',
+                fontSize: '20px',
+                cursor: 'pointer'
+              }}
+            >
+              ×
+            </div>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              background: 'var(--accent)',
+              margin: '0 auto 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'pulse 2s ease-in-out infinite'
+            }}>
+              <div style={{ fontSize: '24px', color: '#0A0F1E' }}>♥</div>
+            </div>
+            <div style={{
+              fontSize: '14px',
+              color: 'var(--sub)',
+              textAlign: 'center',
+              marginBottom: '16px'
+            }}>
+              Listening...
+            </div>
+            <div
+              onClick={() => setCorResponse("Your stress has been climbing this week. Try to get to bed before 10pm tonight and drink plenty of water. I'm watching over you.")}
+              style={{
+                minHeight: '80px',
+                textAlign: 'center',
+                fontSize: '16px',
+                color: corResponse.includes('Ask me') ? 'var(--sub)' : 'var(--text)',
+                padding: '0 16px',
+                cursor: 'pointer'
+              }}
+            >
+              {corResponse}
+            </div>
+          </div>
+
+          {/* Hey Cor Button */}
+          <button id="hey-cor-button" onClick={() => setShowHeyCor(true)}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2h2v2a5 5 0 0 0 10 0v-2h2z"/>
+              <path d="M11 20h2v2h-2z"/>
+            </svg>
+          </button>
+
+          {/* Bottom Navigation */}
+          <nav id="bottom-nav">
+            <div className={`nav-tab ${activeNav === 'home' ? 'active' : ''}`} onClick={() => navigateTo('home')}>
+              <div className="nav-tab-icon">🏠</div>
+              <div>Home</div>
+            </div>
+            <div className={`nav-tab ${activeNav === 'insights' ? 'active' : ''}`} onClick={() => navigateTo('insights')}>
+              <div className="nav-tab-icon">💡</div>
+              <div>Insights</div>
+            </div>
+            <div className={`nav-tab ${activeNav === 'log' ? 'active' : ''}`} onClick={() => navigateTo('log')}>
+              <div className="nav-tab-icon">📝</div>
+              <div>Log</div>
+            </div>
+            <div className={`nav-tab ${activeNav === 'settings' ? 'active' : ''}`} onClick={() => navigateTo('settings')}>
+              <div className="nav-tab-icon">⚙️</div>
+              <div>Settings</div>
+            </div>
+          </nav>
+        </>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
+</parameter>
