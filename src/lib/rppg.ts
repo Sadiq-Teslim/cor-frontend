@@ -200,28 +200,19 @@ export class RPPGDetector {
     const mean = recent.reduce((a, b) => a + b, 0) / recent.length;
     const meanGreen = recentGreen.reduce((a, b) => a + b, 0) / recentGreen.length;
 
-    // Brightness: normalize to 0-1 range
-    // Works with or without torch - just needs to be in reasonable range (40-200)
-    const brightness = Math.min(1, Math.max(0, (mean - 50) / 120));
+    // Brightness: normalize to 0-1 range based on actual signal
+    const brightness = Math.min(1, Math.max(0, mean / 200));
     
-    // Finger detection: 
-    // - With torch: would be bright (>150) and reddish
-    // - Without torch: medium darkness (60-140) and red > green
-    // Works for both cases
-    const isFingerDetected = 
-      mean > 60 && // Not too dark (not pointing at nothing)
-      mean < 180 && // Not too bright (not pointing at light)
-      mean > meanGreen - 5; // Red channel >= green (tissue is reddish/pinkish)
-
     // Pulsatile quality: variance in the signal indicates pulse waves
     const variance =
       recent.reduce((s, v) => s + (v - mean) ** 2, 0) / recent.length;
     const stdDev = Math.sqrt(variance);
 
-    // Good pulse signal has stdDev between 0.5-20 (too high = noise, too low = no pulse)
+    // Good pulse signal has stdDev between 0.3-20 (too high = noise, too low = no pulse)
+    // Lower threshold allows detection even when finger is firmly covering camera (very dark)
     let pulsatile = 0;
-    if (stdDev >= 0.5 && stdDev <= 20) {
-      pulsatile = Math.min(1, stdDev / 10);
+    if (stdDev >= 0.3 && stdDev <= 25) {
+      pulsatile = Math.min(1, stdDev / 8);
     }
 
     // Stability: check for sudden movements (large frame-to-frame changes)
@@ -233,11 +224,25 @@ export class RPPGDetector {
       stability = Math.max(0, 1 - avgMotion / 15);
     }
 
+    // Finger detection logic:
+    // Key insight: we detect fingers by pulsatile signal (blood flow), not just darkness
+    // - Completely covered (ideal): mean=10-40, red>green, high stdDev = ✓ FINGER
+    // - Partial coverage: mean=40-100, red>=green, medium stdDev = ✓ FINGER  
+    // - Pointing at light: mean>200, low stdDev = ✗ NOT FINGER
+    // - Pointing at dark surface: mean<10, low stdDev = ✗ NOT FINGER
+    const isFingerDetected = 
+      mean > 8 && // Some signal (not complete darkness/no light)
+      mean < 220 && // Not pointing at bright light source
+      mean >= meanGreen - 3 && // Red channel dominant or equal (tissue, not blue surface)
+      pulsatile > 0.05; // Most important: must have pulsatile signal (pulse wave)
+
     // Overall strength combines all factors
     const strength =
-      isFingerDetected && pulsatile > 0.1
-        ? brightness * 0.3 + pulsatile * 0.5 + stability * 0.2
-        : 0;
+      isFingerDetected 
+        ? brightness * 0.2 + pulsatile * 0.6 + stability * 0.2
+        : pulsatile > 0.1 && mean > 8 && mean < 220
+          ? pulsatile * 0.3 // Weak detection: has pulse but lighting not ideal
+          : 0;
 
     return {
       strength: Math.min(1, strength),
@@ -522,13 +527,17 @@ export class RPPGDetector {
     if (this.onSignalUpdate) {
       const quality = this.getSignalQuality();
       
-      // Log quality metrics every 60 frames (~2 seconds at 30fps)
-      if (this.redSamples.length % 60 === 0) {
-        console.log(`[RPPG] Sample ${this.redSamples.length}: ` +
-          `red=${avgRed.toFixed(1)}, green=${avgGreen.toFixed(1)}, ` +
-          `finger=${quality.isFingerDetected ? '✓' : '✗'}, ` +
-          `strength=${quality.strength.toFixed(2)}, ` +
-          `pulsatile=${quality.pulsatile.toFixed(2)}`);
+      // Log quality metrics every 30 frames (~1 second at 30fps)
+      if (this.redSamples.length % 30 === 0) {
+        const recent = this.redSamples.slice(-60);
+        const variance = recent.reduce((s, v) => s + (v - avgRed) ** 2, 0) / recent.length;
+        const stdDev = Math.sqrt(variance);
+        
+        console.log(`[RPPG] ${this.redSamples.length}smp: ` +
+          `R=${avgRed.toFixed(1)} G=${avgGreen.toFixed(1)} | ` +
+          `σ=${stdDev.toFixed(2)} pulsatile=${quality.pulsatile.toFixed(2)} | ` +
+          `${quality.isFingerDetected ? '✓ FINGER DETECTED' : '✗ no finger'} | ` +
+          `strength=${quality.strength.toFixed(2)}`);
       }
       
       this.onSignalUpdate(quality);
