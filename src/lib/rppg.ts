@@ -352,11 +352,15 @@ export class RPPGDetector {
    * Returns null if not enough data or invalid readings
    */
   getResult(): RPPGResult | null {
-    if (this.redSamples.length < MIN_SAMPLES_FOR_ANALYSIS) return null;
+    if (this.redSamples.length < MIN_SAMPLES_FOR_ANALYSIS) {
+      console.log(`[RPPG] getResult: not enough samples (${this.redSamples.length}/${MIN_SAMPLES_FOR_ANALYSIS})`);
+      return null;
+    }
 
     // Check signal quality first
     const quality = this.getSignalQuality();
     if (!quality.isFingerDetected || quality.strength < 0.2) {
+      console.log(`[RPPG] getResult: bad quality - finger=${quality.isFingerDetected} strength=${quality.strength.toFixed(2)}`);
       return null;
     }
 
@@ -378,7 +382,11 @@ export class RPPGDetector {
     // Step 3: Find peaks with adaptive threshold
     const peaks = this.findPeaksAdaptive(filtered, actualFps);
 
-    if (peaks.length < 5) return null;
+    if (peaks.length < 5) {
+      console.log(`[RPPG] ❌ getResult FAILED: not enough peaks detected (${peaks.length})`);
+      return null;
+    }
+    console.log(`[RPPG] ✓ Step 3: ${peaks.length} peaks found`);
 
     // Step 4: Calculate intervals and validate
     const intervals: number[] = [];
@@ -391,11 +399,19 @@ export class RPPGDetector {
       }
     }
 
-    if (intervals.length < 4) return null;
+    if (intervals.length < 4) {
+      console.log(`[RPPG] ❌ getResult FAILED: not enough valid intervals (${intervals.length}/${peaks.length - 1} peaks valid)`);
+      return null;
+    }
+    console.log(`[RPPG] ✓ Step 4: ${intervals.length} valid intervals from ${peaks.length} peaks`);
 
     // Step 5: Remove outlier intervals (more than 2 std dev from median)
     const cleanedIntervals = this.removeOutliers(intervals);
-    if (cleanedIntervals.length < 4) return null;
+    if (cleanedIntervals.length < 4) {
+      console.log(`[RPPG] ❌ getResult FAILED: not enough intervals after outlier removal (${cleanedIntervals.length}/${intervals.length})`);
+      return null;
+    }
+    console.log(`[RPPG] ✓ Step 5: ${cleanedIntervals.length} intervals after outlier removal`);
 
     // Step 6: Calculate heart rate
     const avgInterval =
@@ -412,8 +428,15 @@ export class RPPGDetector {
     );
 
     // Step 8: Validate results
-    if (heartRate < MIN_HR || heartRate > MAX_HR) return null;
-    if (hrv < 0 || hrv > 300) return null;
+    if (heartRate < MIN_HR || heartRate > MAX_HR) {
+      console.log(`[RPPG] ❌ getResult FAILED: HR ${heartRate} out of range [${MIN_HR}-${MAX_HR}]`);
+      return null;
+    }
+    if (hrv < 0 || hrv > 300) {
+      console.log(`[RPPG] ❌ getResult FAILED: HRV ${hrv} out of valid range [0-300]`);
+      return null;
+    }
+    console.log(`[RPPG] ✓ Step 6-8: HR=${heartRate} bpm, HRV=${hrv} ms`);
 
     // Step 9: Calculate confidence score
     const confidence = this.calculateConfidence(
@@ -423,8 +446,12 @@ export class RPPGDetector {
     );
 
     // Require minimum confidence
-    if (confidence < 0.3) return null;
+    if (confidence < 0.3) {
+      console.log(`[RPPG] ❌ getResult FAILED: confidence ${confidence.toFixed(2)} < 0.3 threshold`);
+      return null;
+    }
 
+    console.log(`[RPPG] ✅ SUCCESS: HR=${heartRate} HRV=${hrv} confidence=${confidence.toFixed(2)}`);
     return { heartRate, hrv, confidence };
   }
 
