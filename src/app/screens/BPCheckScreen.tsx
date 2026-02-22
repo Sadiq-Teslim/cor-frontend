@@ -5,7 +5,20 @@ import {
   type SignalQuality,
   type RPPGResult,
 } from "../../lib/rppg";
-import { Smile, Meh, Frown, ArrowLeft, X, Check, Share2, RefreshCw, HeartPulse, Activity, Clock, AlertCircle } from "lucide-react";
+import {
+  Smile,
+  Meh,
+  Frown,
+  ArrowLeft,
+  X,
+  Check,
+  Share2,
+  RefreshCw,
+  HeartPulse,
+  Activity,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
 
 interface Props {
   userId: string | null;
@@ -427,15 +440,20 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
 
       {bpReading && !showResultModal && (
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(0, 229, 204, 0.15)' }}>
-            <Check size={32} style={{ color: '#00E5CC' }} />
+          <div
+            className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(0, 229, 204, 0.15)" }}
+          >
+            <Check size={32} style={{ color: "#00E5CC" }} />
           </div>
           <h2 className="text-xl font-bold mb-2">Reading Complete!</h2>
-          <p className="text-sm mb-4" style={{ color: '#8896A8' }}>Your BP data has been saved to your profile.</p>
+          <p className="text-sm mb-4" style={{ color: "#8896A8" }}>
+            Your BP data has been saved to your profile.
+          </p>
           <button
             onClick={() => setShowResultModal(true)}
             className="w-full font-bold text-base px-4 py-4 rounded-xl"
-            style={{ background: '#00E5CC', color: '#0A0F1E' }}
+            style={{ background: "#00E5CC", color: "#0A0F1E" }}
           >
             View Results
           </button>
@@ -444,84 +462,172 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
 
       {/* Result Modal */}
       {showResultModal && bpReading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0, 0, 0, 0.8)' }}>
-          <div className="w-full max-w-md rounded-2xl p-6" style={{ background: '#111827', border: '1px solid #1E2D45', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: "rgba(0, 0, 0, 0.8)" }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-6"
+            style={{
+              background: "#111827",
+              border: "1px solid #1E2D45",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">BP Reading Results</h2>
-              <button onClick={() => setShowResultModal(false)} className="p-2 rounded-full" style={{ background: '#1E2D45' }}>
-                <X size={18} style={{ color: '#8896A8' }} />
+              <button
+                onClick={() => setShowResultModal(false)}
+                className="p-2 rounded-full"
+                style={{ background: "#1E2D45" }}
+              >
+                <X size={18} style={{ color: "#8896A8" }} />
               </button>
             </div>
 
             {/* Saved Confirmation */}
             {bpReading.savedAt && (
-              <div className="flex items-center gap-2 mb-4 p-3 rounded-xl" style={{ background: 'rgba(0, 229, 204, 0.1)', border: '1px solid #00E5CC' }}>
-                <Check size={18} style={{ color: '#00E5CC' }} />
-                <span className="text-sm" style={{ color: '#00E5CC' }}>Saved to your health profile</span>
+              <div
+                className="flex items-center gap-2 mb-4 p-3 rounded-xl"
+                style={{
+                  background: "rgba(0, 229, 204, 0.1)",
+                  border: "1px solid #00E5CC",
+                }}
+              >
+                <Check size={18} style={{ color: "#00E5CC" }} />
+                <span className="text-sm" style={{ color: "#00E5CC" }}>
+                  Saved to your health profile
+                </span>
               </div>
             )}
 
             {/* Early Completion Badge */}
             {bpReading.earlyComplete && !bpReading.lowConfidence && (
-              <div className="flex items-center gap-2 mb-4 p-3 rounded-xl" style={{ background: 'rgba(0, 229, 204, 0.05)', border: '1px solid #1E2D45' }}>
-                <Clock size={16} style={{ color: '#00E5CC' }} />
-                <span className="text-sm">High confidence reading in {completionTime}s</span>
+              <div
+                className="flex items-center gap-2 mb-4 p-3 rounded-xl"
+                style={{
+                  background: "rgba(0, 229, 204, 0.05)",
+                  border: "1px solid #1E2D45",
+                }}
+              >
+                <Clock size={16} style={{ color: "#00E5CC" }} />
+                <span className="text-sm">
+                  High confidence reading in {completionTime}s
+                </span>
               </div>
             )}
 
             {/* Low Confidence Warning */}
             {bpReading.lowConfidence && (
-              <div className="flex items-center gap-2 mb-4 p-3 rounded-xl" style={{ background: 'rgba(245, 166, 35, 0.1)', border: '1px solid #F5A623' }}>
-                <AlertCircle size={16} style={{ color: '#F5A623' }} />
-                <span className="text-sm" style={{ color: '#F5A623' }}>Variable signal quality</span>
+              <div
+                className="flex items-center gap-2 mb-4 p-3 rounded-xl"
+                style={{
+                  background: "rgba(245, 166, 35, 0.1)",
+                  border: "1px solid #F5A623",
+                }}
+              >
+                <AlertCircle size={16} style={{ color: "#F5A623" }} />
+                <span className="text-sm" style={{ color: "#F5A623" }}>
+                  Variable signal quality
+                </span>
               </div>
             )}
 
             {/* Results Table */}
-            <div className="rounded-xl overflow-hidden mb-4" style={{ border: '1px solid #1E2D45' }}>
+            <div
+              className="rounded-xl overflow-hidden mb-4"
+              style={{ border: "1px solid #1E2D45" }}
+            >
               <table className="w-full">
                 <tbody>
-                  <tr style={{ borderBottom: '1px solid #1E2D45' }}>
-                    <td className="px-4 py-3 text-sm" style={{ color: '#8896A8' }}>
+                  <tr style={{ borderBottom: "1px solid #1E2D45" }}>
+                    <td
+                      className="px-4 py-3 text-sm"
+                      style={{ color: "#8896A8" }}
+                    >
                       <div className="flex items-center gap-2">
-                        <HeartPulse size={16} style={{ color: '#00E5CC' }} />
+                        <HeartPulse size={16} style={{ color: "#00E5CC" }} />
                         Heart Rate
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold">{bpReading.hr} <span className="text-sm font-normal" style={{ color: '#8896A8' }}>bpm</span></td>
+                    <td className="px-4 py-3 text-right font-semibold">
+                      {bpReading.hr}{" "}
+                      <span
+                        className="text-sm font-normal"
+                        style={{ color: "#8896A8" }}
+                      >
+                        bpm
+                      </span>
+                    </td>
                   </tr>
-                  <tr style={{ borderBottom: '1px solid #1E2D45' }}>
-                    <td className="px-4 py-3 text-sm" style={{ color: '#8896A8' }}>
+                  <tr style={{ borderBottom: "1px solid #1E2D45" }}>
+                    <td
+                      className="px-4 py-3 text-sm"
+                      style={{ color: "#8896A8" }}
+                    >
                       <div className="flex items-center gap-2">
-                        <Activity size={16} style={{ color: '#A78BFA' }} />
+                        <Activity size={16} style={{ color: "#A78BFA" }} />
                         HRV
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold">{bpReading.hrv} <span className="text-sm font-normal" style={{ color: '#8896A8' }}>ms</span></td>
+                    <td className="px-4 py-3 text-right font-semibold">
+                      {bpReading.hrv}{" "}
+                      <span
+                        className="text-sm font-normal"
+                        style={{ color: "#8896A8" }}
+                      >
+                        ms
+                      </span>
+                    </td>
                   </tr>
                   {bpReading.systolic && bpReading.diastolic && (
-                    <tr style={{ borderBottom: '1px solid #1E2D45' }}>
-                      <td className="px-4 py-3 text-sm" style={{ color: '#8896A8' }}>
+                    <tr style={{ borderBottom: "1px solid #1E2D45" }}>
+                      <td
+                        className="px-4 py-3 text-sm"
+                        style={{ color: "#8896A8" }}
+                      >
                         <div className="flex items-center gap-2">
                           <span className="text-lg">🩸</span>
                           Blood Pressure
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="font-bold text-lg">{bpReading.systolic}/{bpReading.diastolic}</span>
-                        <span className="text-sm font-normal ml-1" style={{ color: '#8896A8' }}>mmHg</span>
+                        <span className="font-bold text-lg">
+                          {bpReading.systolic}/{bpReading.diastolic}
+                        </span>
+                        <span
+                          className="text-sm font-normal ml-1"
+                          style={{ color: "#8896A8" }}
+                        >
+                          mmHg
+                        </span>
                       </td>
                     </tr>
                   )}
                   {bpReading.category && (
                     <tr>
-                      <td className="px-4 py-3 text-sm" style={{ color: '#8896A8' }}>Category</td>
+                      <td
+                        className="px-4 py-3 text-sm"
+                        style={{ color: "#8896A8" }}
+                      >
+                        Category
+                      </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="px-3 py-1 rounded-full text-sm font-semibold" style={{
-                          background: bpReading.status === 'normal' ? 'rgba(0, 229, 204, 0.15)' : 'rgba(245, 166, 35, 0.15)',
-                          color: bpReading.status === 'normal' ? '#00E5CC' : '#F5A623'
-                        }}>
+                        <span
+                          className="px-3 py-1 rounded-full text-sm font-semibold"
+                          style={{
+                            background:
+                              bpReading.status === "normal"
+                                ? "rgba(0, 229, 204, 0.15)"
+                                : "rgba(245, 166, 35, 0.15)",
+                            color:
+                              bpReading.status === "normal"
+                                ? "#00E5CC"
+                                : "#F5A623",
+                          }}
+                        >
                           {bpReading.category}
                         </span>
                       </td>
@@ -532,13 +638,28 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
             </div>
 
             {/* Health Interpretation */}
-            <div className="p-4 rounded-xl mb-4" style={{ background: '#0A0F1E', border: '1px solid #1E2D45' }}>
-              <div className="text-xs font-semibold mb-2" style={{ color: bpReading.status === 'normal' ? '#00E5CC' : '#F5A623' }}>
+            <div
+              className="p-4 rounded-xl mb-4"
+              style={{ background: "#0A0F1E", border: "1px solid #1E2D45" }}
+            >
+              <div
+                className="text-xs font-semibold mb-2"
+                style={{
+                  color: bpReading.status === "normal" ? "#00E5CC" : "#F5A623",
+                }}
+              >
                 INTERPRETATION
               </div>
-              <p className="text-sm leading-relaxed mb-2">{bpReading.message}</p>
+              <p className="text-sm leading-relaxed mb-2">
+                {bpReading.message}
+              </p>
               {bpReading.recommendation && (
-                <p className="text-sm leading-relaxed" style={{ color: '#8896A8' }}>{bpReading.recommendation}</p>
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{ color: "#8896A8" }}
+                >
+                  {bpReading.recommendation}
+                </p>
               )}
             </div>
 
@@ -551,7 +672,11 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
                   setFeelingSelected(null);
                 }}
                 className="flex-1 font-semibold text-sm px-4 py-3 rounded-xl flex items-center justify-center gap-2"
-                style={{ background: 'transparent', border: '1px solid #1E2D45', color: '#F0F4FF' }}
+                style={{
+                  background: "transparent",
+                  border: "1px solid #1E2D45",
+                  color: "#F0F4FF",
+                }}
               >
                 <RefreshCw size={16} />
                 New Reading
@@ -560,14 +685,16 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
                 onClick={() => {
                   // Share functionality
                   if (navigator.share) {
-                    navigator.share({
-                      title: 'My BP Reading',
-                      text: `BP: ${bpReading.systolic || '--'}/${bpReading.diastolic || '--'} mmHg | HR: ${bpReading.hr} bpm | HRV: ${bpReading.hrv}ms`,
-                    }).catch(console.error);
+                    navigator
+                      .share({
+                        title: "My BP Reading",
+                        text: `BP: ${bpReading.systolic || "--"}/${bpReading.diastolic || "--"} mmHg | HR: ${bpReading.hr} bpm | HRV: ${bpReading.hrv}ms`,
+                      })
+                      .catch(console.error);
                   }
                 }}
                 className="flex-1 font-semibold text-sm px-4 py-3 rounded-xl flex items-center justify-center gap-2"
-                style={{ background: '#00E5CC', color: '#0A0F1E' }}
+                style={{ background: "#00E5CC", color: "#0A0F1E" }}
               >
                 <Share2 size={16} />
                 Share
@@ -581,7 +708,11 @@ export default function BPCheckScreen({ userId, onBack }: Props) {
                 onBack();
               }}
               className="w-full mt-3 font-semibold text-sm px-4 py-3 rounded-xl"
-              style={{ background: 'transparent', border: '1px solid #00E5CC', color: '#00E5CC' }}
+              style={{
+                background: "transparent",
+                border: "1px solid #00E5CC",
+                color: "#00E5CC",
+              }}
             >
               Back to Home
             </button>
